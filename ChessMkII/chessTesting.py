@@ -6,7 +6,6 @@ date-created: 2021-07-27
 """
 
 import pygame
-from chess_engine import *
 
 pygame.init()
 
@@ -57,7 +56,19 @@ class Colour:
 
 # Engine Class
 class Engine:
-    pass
+    def __init__(self):
+        self.white_to_move = True
+        self.black_to_move = True
+        self.is_mate = False
+        self.is_stalemate = False
+        self.is_pawn_promotion = False
+        self.is_en_passant = False
+
+    def move(self):
+        pass
+
+    def findLegalMoves(self, piece_type):
+        pass
 
 
 # Piece Master Class
@@ -109,8 +120,8 @@ class Board:
         self.height = height
         self.square_size = self.width // self.dimension
         self.colour = Colour()
-        self.colour1 = self.colour.WHITE
-        self.colour2 = self.colour.GREY
+        self.colour1 = self.colour.LIGHT_BROWN
+        self.colour2 = self.colour.BROWN
         self.board_colours = (self.colour1, self.colour2)
         self.virtual_board = [
             ["rook_black", "knight_black", "bishop_black", "queen_black", "king_black", "bishop_black", "knight_black", "rook_black"],  # 8th Rank

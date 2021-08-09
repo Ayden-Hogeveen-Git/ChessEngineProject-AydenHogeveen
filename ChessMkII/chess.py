@@ -10,14 +10,14 @@ import pygame
 pygame.init()
 
 # Creating the game window
-width = height = 540
+width = height = 720
 screen = pygame.display.set_mode((width, height))
 
 # Background Sound
 
 
 # Title and Icon
-pygame.display.set_caption("Chess")
+pygame.display.set_caption("Chess Game")
 icon = pygame.image.load("chessAssets/CHESSICON.png")
 pygame.display.set_icon(icon)
 
@@ -47,7 +47,7 @@ class Colour:
 
     PURPLE = (150, 0, 175)
 
-    INDIGO = (50, 0, 75)
+    INDIGO = (75, 0, 100)
 
     WOOD = (100, 50, 0)
 
@@ -56,16 +56,6 @@ class Colour:
 
 # Engine Class
 class Engine:
-    pass
-
-
-# Piece Master Class
-class Piece:
-    pass
-
-
-# Pawn Class
-class Pawn(Piece):
     pass
 
 
@@ -82,7 +72,7 @@ class Board:
         self.square_size = self.width // self.dimension
         self.colour = Colour()
         self.colour1 = self.colour.WHITE
-        self.colour2 = self.colour.GREY
+        self.colour2 = self.colour.GREEN
         self.board_colours = (self.colour1, self.colour2)
         self.virtual_board = [
             ["rook_black", "knight_black", "bishop_black", "queen_black", "king_black", "bishop_black", "knight_black", "rook_black"],  # 8th Rank
@@ -110,7 +100,7 @@ class Board:
                                  (x * self.square_size, y * self.square_size, self.square_size, self.square_size))
 
     def loadImages(self):
-        pieces = ["wp", "wR", "wN", "wB", "wQ", "wK", "bp", "bR", "bN", "bB", "bQ", "bK"]
+        pieces = ["pawn_white", "rook_white", "knight_white", "bishop_white", "queen_white", "king_white", "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "king_black"]
         for piece in pieces:
             self.images[piece] = pygame.transform.scale(pygame.image.load("chessAssets/ChessPieces/" + piece + ".png"),
                                                         (self.square_size, self.square_size))
@@ -119,13 +109,29 @@ class Board:
         for x in range(self.dimension):
             for y in range(self.dimension):
                 piece = virtual_board[y][x]
-                if piece != "--":
+                if piece != "0":
                     screen.blit(self.images[piece], pygame.Rect(x * self.square_size, y * self.square_size, self.square_size, self.square_size))
 
     def drawGame(self, virtual_board):
         self.loadImages()
         self.drawBoard()
         self.drawPieces(virtual_board)
+
+
+# Drag and Drop Class
+class DragDrop:
+    def __init__(self):
+        self.is_held = False
+
+    def holding_piece(self, rect, pos):
+        rect_x, rect_y, rect_width, rect_height = rect
+
+        player_x, player_y = pos
+
+        if rect_y <= player_y <= rect_y + rect_height and rect_x <= player_x <= rect_x + rect_width:
+            return True
+        else:
+            return False
 
 
 # Main Class
@@ -138,18 +144,56 @@ class Main:
     def __init__(self):
         self.running = True
         self.board = Board()
+        self.drag_drop = DragDrop()
+        self.imgs = self.board.images
+        self.square_selected = ()
+        self.player_clicks = []
         self.clock = pygame.time.Clock()
 
     def run(self):
-
+        global piece
         while self.running:
-            # Setting the background colour (RGB - Red, Green, Blue : 0-255)
-            screen.fill((0, 0, 0))
-            self.board.drawGame(self.board.virutal_board)
+            # Setting the background colour
+            screen.fill(Colour.BLACK)
+            self.board.drawGame(self.board.virtual_board)
 
+            pieces = ["pawn_white", "rook_white", "knight_white", "bishop_white", "queen_white", "king_white",
+                      "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "king_black"]
+            for piece in pieces:
+                self.imgs[piece] = pygame.transform.scale(
+                    pygame.image.load("chessAssets/ChessPieces/" + piece + ".png"),
+                    (self.board.square_size, self.board.square_size))
+
+            # Tracking the mouse's position
+            mouse_pos = pygame.mouse.get_pos()
+
+            mouse_rank = mouse_pos[0]//self.board.square_size
+            mouse_file = mouse_pos[1]//self.board.square_size
+
+            # Tracking events
             for event in pygame.event.get():
+                # X Button
                 if event.type == pygame.QUIT:
                     self.running = False
+
+                # Mouse Events
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    # Make the state 'held'
+                    self.drag_drop.is_held = True
+                    if self.drag_drop.is_held:
+                        print("Holding a", self.board.virtual_board[mouse_file][mouse_rank], "at", mouse_rank, mouse_file)
+
+                if event.type == pygame.MOUSEBUTTONUP:
+                    # Make the state 'dropped'
+                    self.drag_drop.is_held = False
+                    if not self.drag_drop.is_held:
+                        print("dropped at", mouse_rank, mouse_file)
+
+                if event.type == pygame.MOUSEMOTION:
+                    # Holding the piece while moving the mouse
+                    if self.drag_drop.is_held:
+                        piece_width = self.imgs[piece].get_width()
+                        piece_height = self.imgs[piece].get_height()
 
             # Updates the Screen
             pygame.display.update()
