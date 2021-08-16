@@ -6,8 +6,10 @@ date-created: 2021-07-27
 """
 
 import pygame
+from engine import Engine, Move
 
 pygame.init()
+engine = Engine()
 
 # Creating the game window
 width = height = 720
@@ -106,22 +108,6 @@ class Board:
         self.colour1 = self.colour.LIGHT_BROWN
         self.colour2 = self.colour.BROWN
         self.board_colours = (self.colour1, self.colour2)
-        self.virtual_board = [
-            ["rook_black", "knight_black", "bishop_black", "queen_black", "king_black", "bishop_black", "knight_black", "rook_black"],  # 8th Rank
-            ["pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black"],  # 7th Rank
-            ["0", "0", "0", "0", "0", "0", "0", "0"],  # 6th Rank
-            ["0", "0", "0", "0", "0", "0", "0", "0"],  # 5th Rank
-            ["0", "0", "0", "0", "0", "0", "0", "0"],  # 4th Rank
-            ["0", "0", "0", "0", "0", "0", "0", "0"],  # 3th Rank
-            ["pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white"],  # 2nd Rank
-            ["rook_white", "knight_white", "bishop_white", "queen_white", "king_white", "bishop_white", "knight_white", "rook_white"]]  # 1st Rank
-        """
-        Notes about the virtual board:
-        - Each piece is represented by a string, the string name is also the name of the .png file that holds the 
-        image of the piece
-        - A blank square is represented by a 0
-        - To access a piece using the virtual board, use self.virtual_board[file][rank]
-        """
         self.images = {}
 
     def drawBoard(self):
@@ -172,62 +158,6 @@ class DragDrop:
             return False
 
 
-# Engine Class
-class Engine:
-    def __init__(self):
-        self.board = Board()
-        self.white_to_move = True
-        self.black_to_move = True
-        self.is_mate = False
-        self.is_stalemate = False
-        self.is_pawn_promotion = False
-        self.is_en_passant = False
-        self.move_log = []
-
-    def move(self, move):
-        self.board.virtual_board[move.start_rank][move.start_file] = "0"
-        self.board.virtual_board[move.end_rank][move.end_file] = move.piece_moved
-        self.move_log.append(move)
-        if self.white_to_move:
-            self.white_to_move = False
-        else:
-            self.white_to_move = True
-
-    def findLegalMoves(self, piece_type):
-        pass
-
-
-# Move Class
-class Move:
-    def __init__(self, start_square, end_square, virtual_board):
-        self.start_rank = start_square[0]
-        self.start_file = start_square[1]
-        self.end_rank = end_square[0]
-        self.end_file = end_square[1]
-        self.piece_moved = virtual_board[self.start_rank][self.start_file]
-        self.piece_captured = virtual_board[self.end_rank][self.end_file]
-        self.move_id = self.start_rank * 10 + self.start_file * 1 + self.end_rank * 0.1 + self.end_file * 0.01
-
-        self.translate_ranks = {"1": 7, "2": 6, "3": 5, "4": 4, "5": 3, "6": 2, "7": 1, "8": 0}
-        self.translated_ranks = {translate: key for key, translate in self.translate_ranks.items()}  # Reverses a Dictionary
-        self.translate_files = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7}
-        self.translated_files = {translate: key for key, translate in self.translate_files.items()}  # Reverses a Dictionary
-
-    def __eq__(self, other):
-        """
-        Overriding the equals method
-        """
-        if isinstance(other, Move):
-            return self.move_id == other.move_id
-        return False
-
-    def getRankFile(self, rank, file):
-        return self.translated_files[file] + self.translated_ranks[rank]
-
-    def getChessNotation(self):
-        return self.getRankFile(self.start_file, self.start_rank) + self.getRankFile(self.end_file, self.end_rank)
-
-
 # Main Class
 class Main:
     """
@@ -246,34 +176,36 @@ class Main:
         self.clock = pygame.time.Clock()
 
     def run(self):
-        global piece
-
         move_made = False  # Flag for moves that are made
 
+        # Setting the background colour
+        screen.fill(Colour.BLACK)
+
+        self.board.loadImages()
+
         while self.running:
-            # Setting the background colour
-            screen.fill(Colour.BLACK)
-            self.board.drawGame(self.board.virtual_board)
-
-            # Tracking the mouse's position
-            mouse_pos = pygame.mouse.get_pos()
-
-            mouse_rank = mouse_pos[0] // self.board.square_size  # Refers to the X position of the mouse, in terms of squares
-            mouse_file = mouse_pos[1] // self.board.square_size  # Refers to the Y position of the mouse, in terms of squares
+            self.board.drawGame(self.engine.virtual_board)
 
             # Tracking events
             for event in pygame.event.get():
+
                 # X Button
                 if event.type == pygame.QUIT:
                     self.running = False
 
                 # Mouse Events
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    # Make the state 'held'
-                    self.drag_drop.is_held = True
-                    if self.drag_drop.is_held:
-                        held_piece = self.board.virtual_board[mouse_file][mouse_rank]
-                        print("Holding a", held_piece, "at", mouse_rank, mouse_file)
+                    # Tracking the mouse's position
+                    mouse_pos = pygame.mouse.get_pos()
+
+                    mouse_rank = mouse_pos[0] // self.board.square_size  # Refers to the X position of the mouse, in terms of squares
+                    mouse_file = mouse_pos[1] // self.board.square_size  # Refers to the Y position of the mouse, in terms of squares
+
+                    # # Make the state 'held'
+                    # self.drag_drop.is_held = True
+                    # if self.drag_drop.is_held:
+                    #     held_piece = engine.virtual_board[mouse_file][mouse_rank]
+                    #     print("Holding a", held_piece, "at", mouse_rank, mouse_file)
 
                     if self.square_selected == (mouse_rank, mouse_file):  # The player clicks the same square again
                         # Reset, deselecting the piece
@@ -285,27 +217,25 @@ class Main:
 
                     if len(self.player_clicked) == 2:  # The player has clicked 2 different squares
                         # Move the piece on the first square to the second square
-                        move = Move(self.player_clicked[0], self.player_clicked[1], self.board.virtual_board)
+                        move = Move(self.player_clicked[0], self.player_clicked[1], self.engine.virtual_board)
                         print(move.getChessNotation())
 
                         self.engine.move(move)
-                        print(self.board.virtual_board)
                         move_made = True
                         self.square_selected = ()
                         self.player_clicked = []
 
                 # if event.type == pygame.MOUSEBUTTONUP:
+                #     # Tracking the mouse's position
+                #     mouse_pos = pygame.mouse.get_pos()
+                #
+                #     mouse_rank = mouse_pos[0] // self.board.square_size  # Refers to the X position of the mouse, in terms of squares
+                #     mouse_file = mouse_pos[1] // self.board.square_size  # Refers to the Y position of the mouse, in terms of squares
+                #
                 #     # Make the state 'dropped'
                 #     self.drag_drop.is_held = False
                 #     if not self.drag_drop.is_held:
-                #         pass
                 #         print("dropped at", mouse_rank, mouse_file)
-
-                # if event.type == pygame.MOUSEMOTION:
-                #     # Holding the piece while moving the mouse
-                #     if self.drag_drop.is_held:
-                #         piece_width = self.imgs[piece].get_width()
-                #         piece_height = self.imgs[piece].get_height()
 
             # Updates the Screen
             pygame.display.update()
