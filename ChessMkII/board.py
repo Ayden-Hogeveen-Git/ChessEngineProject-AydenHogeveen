@@ -1,7 +1,8 @@
 # board.py
 import pygame
-from chess import width, height, screen
 
+width = height = 720
+screen = pygame.display.set_mode((width, height))
 
 # Colours Class
 class Colour:
@@ -65,7 +66,8 @@ class Board:
                                  (x * self.square_size, y * self.square_size, self.square_size, self.square_size))
 
     def loadImages(self):
-        pieces = ["pawn_white", "rook_white", "knight_white", "bishop_white", "queen_white", "king_white", "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "king_black"]
+        pieces = ["pawn_white", "rook_white", "knight_white", "bishop_white", "queen_white", "King_white",
+                  "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "King_black"]
         for piece in pieces:
             self.images[piece] = pygame.transform.scale(pygame.image.load("chessAssets/ChessPieces/" + piece + ".png"),
                                                         (self.square_size, self.square_size))
@@ -75,14 +77,15 @@ class Board:
             for y in range(self.dimension):
                 piece = virtual_board[y][x]
                 if piece != "0":
-                    screen.blit(self.images[piece], pygame.Rect(x * self.square_size, y * self.square_size, self.square_size, self.square_size))
+                    screen.blit(self.images[piece], pygame.Rect(x * self.square_size, y * self.square_size,
+                                                                self.square_size, self.square_size))
 
     def drawGame(self, virtual_board):
         self.loadImages()
         self.drawBoard()
         self.drawPieces(virtual_board)
-        pieces = ["pawn_white", "rook_white", "knight_white", "bishop_white", "queen_white", "king_white",
-                  "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "king_black"]
+        pieces = ["pawn_white", "rook_white", "knight_white", "bishop_white", "queen_white", "King_white",
+                  "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "King_black"]
         for piece in pieces:
             self.images[piece] = pygame.transform.scale(
                 pygame.image.load("chessAssets/ChessPieces/" + piece + ".png"),
