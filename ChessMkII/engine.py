@@ -94,7 +94,9 @@ class Engine:
         pass
 
     def getRookMoves(self, rank, file, moves):
-        pass
+        """
+        Need to check all of the squares in the sub array, and all the squares with the same index in the entire array
+        """
 
     def getQueenMoves(self, rank, file, moves):
         pass
@@ -109,16 +111,39 @@ class Engine:
         # --- White Pawns --- #
         if self.white_to_move:
             if self.virtual_board[rank - 1][file] == "0":  # Checks the square in front of the pawn is empty
-                moves.append(Move((rank, file), (rank - 1, file), self.virtual_board))
+                moves.append(Move((file, rank), (file, rank - 1), self.virtual_board))
                 if rank == 6 and self.virtual_board[rank - 2][file] == "0":  # Checks if a 2 square pawn move is possible
-                    moves.append(Move((rank, file), (rank - 2, file), self.virtual_board))
+                    moves.append(Move((file, rank), (file, rank - 2), self.virtual_board))
+
+            # Adds the pawn captures to the legal moves list
+            # - Still need to add the protection against trying to move off the board
+            try:
+                if self.virtual_board[rank - 1][file + 1] != "0":
+                    moves.append(Move((file, rank), (file + 1, rank - 1), self.virtual_board))
+                if self.virtual_board[rank - 1][file - 1] != "0":
+                    moves.append(Move((file, rank), (file - 1, rank - 1), self.virtual_board))
+            except IndexError:
+                pass
+
+            # Pawn Promotion
+
 
         # --- Black Pawns --- #
         if not self.white_to_move:
             if self.virtual_board[rank + 1][file] == "0":  # Checks the square in front of the pawn is empty
-                moves.append(Move((rank, file), (rank + 1, file), self.virtual_board))
+                moves.append(Move((file, rank), (file, rank + 1), self.virtual_board))
                 if rank == 1 and self.virtual_board[rank + 2][file] == "0":  # Checks if a 2 square pawn move is possible
-                    moves.append(Move((rank, file), (rank + 2, file), self.virtual_board))
+                    moves.append(Move((file, rank), (file, rank + 2), self.virtual_board))
+
+            # Adds the pawn captures to the legal moves list
+            # - Still need to add the protection against trying to move off the board
+            try:
+                if self.virtual_board[rank + 1][file + 1] != "0":
+                    moves.append(Move((file, rank), (file + 1, rank + 1), self.virtual_board))
+                if self.virtual_board[rank + 1][file - 1] != "0":
+                    moves.append(Move((file, rank), (file - 1, rank + 1), self.virtual_board))
+            except IndexError:
+                pass
 
     def getKnightMoves(self, rank, file, moves):
         pass

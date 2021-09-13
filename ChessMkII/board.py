@@ -4,6 +4,7 @@ import pygame
 width = height = 720
 screen = pygame.display.set_mode((width, height))
 
+
 # Colours Class
 class Colour:
     # RGB Values

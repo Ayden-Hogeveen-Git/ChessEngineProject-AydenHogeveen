@@ -99,6 +99,7 @@ class Main:
         self.player_clicked = []
 
         self.legal_moves = self.engine.findLegalMoves()
+        self.legal_moves = [Move((4, 6), (4, 4), self.engine.virtual_board)]
         self.move_made = False  # Flags when a move is made, so we can perform expensive operations
 
         self.white_isPlayer = True
@@ -157,11 +158,11 @@ class Main:
 
                         if len(self.player_clicked) == 2:  # The player has clicked 2 different squares
                             # Move the piece on the first square to the second square
-                            move = Move(self.player_clicked[0], self.player_clicked[1], self.engine.virtual_board)
-                            print(move.getChessNotation())
+                            player_move = Move(self.player_clicked[0], self.player_clicked[1], self.engine.virtual_board)
+                            print(player_move.getChessNotation())
 
-                            if move in self.legal_moves:
-                                self.engine.move(move)
+                            if player_move in self.legal_moves:
+                                self.engine.move(player_move)
                                 self.move_made = True
                             self.square_selected = ()
                             self.player_clicked = []

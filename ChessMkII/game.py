@@ -86,7 +86,6 @@ class Main:
                         mouse_rank = mouse_pos[0] // self.board.square_size  # Refers to the X position of the mouse, in terms of squares
                         mouse_file = mouse_pos[1] // self.board.square_size  # Refers to the Y position of the mouse, in terms of squares
 
-
                         if self.square_selected == (mouse_rank, mouse_file):  # The player clicks the same square again
                             # Reset, deselecting the piece
                             self.square_selected = ()
@@ -111,8 +110,3 @@ class Main:
             # Updates the Screen
             pygame.display.update()
         pygame.quit()
-
-
-if __name__ == "__main__":
-    main = Main()
-    main.run()
