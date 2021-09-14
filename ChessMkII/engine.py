@@ -116,17 +116,18 @@ class Engine:
                     moves.append(Move((file, rank), (file, rank - 2), self.virtual_board))
 
             # Adds the pawn captures to the legal moves list
-            # - Still need to add the protection against trying to move off the board
-            try:
+            if file + 1 < 8:
+                # Pawn captures right
                 if self.virtual_board[rank - 1][file + 1] != "0":
                     moves.append(Move((file, rank), (file + 1, rank - 1), self.virtual_board))
+
+            if file - 1 > -1:
+                # Pawn captures left
                 if self.virtual_board[rank - 1][file - 1] != "0":
                     moves.append(Move((file, rank), (file - 1, rank - 1), self.virtual_board))
-            except IndexError:
-                pass
+
 
             # Pawn Promotion
-
 
         # --- Black Pawns --- #
         if not self.white_to_move:
@@ -137,16 +138,55 @@ class Engine:
 
             # Adds the pawn captures to the legal moves list
             # - Still need to add the protection against trying to move off the board
-            try:
+            if file + 1 < 8:
+                # Pawn captures right
                 if self.virtual_board[rank + 1][file + 1] != "0":
                     moves.append(Move((file, rank), (file + 1, rank + 1), self.virtual_board))
+            if file - 1 > -1:
+                # Pawn captures left
                 if self.virtual_board[rank + 1][file - 1] != "0":
                     moves.append(Move((file, rank), (file - 1, rank + 1), self.virtual_board))
-            except IndexError:
-                pass
 
     def getKnightMoves(self, rank, file, moves):
-        pass
+        knight_moves = ((-2, -1), (-2, 1), (2, -1), (2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2))
+        if self.white_to_move:
+            player = "w"
+        else:
+            player = "b"
+        for move in knight_moves:
+            end_rank = rank + move[0]
+            end_file = file + move[1]
+            if 0 <= end_rank < 8 and 0 <= end_file < 8:  # If the Knight stays on the board
+                END_PIECE = self.virtual_board[end_rank][end_file]
+                if END_PIECE[0] is not player:  # Not the same colour piece
+                    moves.append(Move((file, rank), (end_file, end_rank), self.virtual_board))
+        #
+        # # --- White Knights --- #
+        # if self.white_to_move:
+        #     try:
+        #         if self.virtual_board[rank - 1][file - 2] == "0" or self.virtual_board[rank - 1][file - 2][0] == "b":
+        #             moves.append(Move((file, rank), (file - 2, rank - 1), self.virtual_board))
+        #         if self.virtual_board[rank - 1][file + 2] == "0" or self.virtual_board[rank - 1][file - 2][0] == "b":
+        #             moves.append(Move((file, rank), (file + 2, rank - 1), self.virtual_board))
+        #         if self.virtual_board[rank + 1][file - 2] == "0" or self.virtual_board[rank - 1][file - 2][0] == "b":
+        #             moves.append(Move((file, rank), (file - 2, rank + 1), self.virtual_board))
+        #         if self.virtual_board[rank + 1][file + 2] == "0" or self.virtual_board[rank - 1][file - 2][0] == "b":
+        #             moves.append(Move((file, rank), (file + 2, rank + 1), self.virtual_board))
+        #         if self.virtual_board[rank - 2][file - 1] == "0" or self.virtual_board[rank - 1][file - 2][0] == "b":
+        #             moves.append(Move((file, rank), (file - 1, rank - 2), self.virtual_board))
+        #         if self.virtual_board[rank - 2][file + 1] == "0" or self.virtual_board[rank - 1][file - 2][0] == "b":
+        #             moves.append(Move((file, rank), (file + 1, rank - 2), self.virtual_board))
+        #         if self.virtual_board[rank + 2][file - 1] == "0" or self.virtual_board[rank - 1][file - 2][0] == "b":
+        #             moves.append(Move((file, rank), (file - 1, rank + 2), self.virtual_board))
+        #         if self.virtual_board[rank + 2][file + 1] == "0" or self.virtual_board[rank - 1][file - 2][0] == "b":
+        #             moves.append(Move((file, rank), (file + 1, rank + 2), self.virtual_board))
+        #     except IndexError:
+        #         pass
+        #
+        # # --- Black Knights --- #
+        # if not self.white_to_move:
+        #     if self.virtual_board[rank + 1][file - 2] == "0" or self.virtual_board[rank + 1][file - 2][0] == "w":
+        #         moves.append(Move((file, rank), (file - 2, rank + 1), self.virtual_board))
 
     def getKingMoves(self, rank, file, moves):
         pass

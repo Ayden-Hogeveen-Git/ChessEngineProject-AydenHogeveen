@@ -99,7 +99,6 @@ class Main:
         self.player_clicked = []
 
         self.legal_moves = self.engine.findLegalMoves()
-        self.legal_moves = [Move((4, 6), (4, 4), self.engine.virtual_board)]
         self.move_made = False  # Flags when a move is made, so we can perform expensive operations
 
         self.white_isPlayer = True
@@ -132,6 +131,13 @@ class Main:
                     if event.key == pygame.K_LEFT:
                         self.engine.takeback()
                         self.move_made = True
+
+                    if event.key == pygame.K_r:
+                        self.engine = Engine()
+                        self.legal_moves = self.engine.findLegalMoves()
+                        self.square_selected = ()
+                        self.player_clicked = []
+                        self.move_made = False
 
                 # Mouse Events
                 if event.type == pygame.MOUSEBUTTONDOWN:
