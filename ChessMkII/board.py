@@ -8,10 +8,11 @@ screen = pygame.display.set_mode((width, height))
 # Colours Class
 class Colour:
     # RGB Values
-
+    BRIGHT_WHITE = (255, 255, 255)
     WHITE = (230, 230, 230)
     BLACK = (0, 0, 0)
 
+    LIGHT_GREY = (150, 150, 150)
     GREY = (100, 100, 100)
     DARK_GREY = (50, 50, 50)
 
@@ -52,8 +53,8 @@ class Board:
 
         # Colours
         self.colour = Colour()
-        self.colour1 = self.colour.WHITE
-        self.colour2 = self.colour.GREEN
+        self.colour1 = self.colour.LIGHT_BROWN
+        self.colour2 = self.colour.BROWN
         self.board_colours = (self.colour1, self.colour2)
 
         # Images

@@ -4,7 +4,6 @@ title: Chess MkII
 author: Ayden Hogeveen
 date-created: 2021-07-27
 """
-
 import pygame
 from engine import Engine, Move
 from board import Board, Colour
@@ -13,7 +12,7 @@ pygame.init()
 engine = Engine()
 
 # Creating the game window
-width = height = 720
+width, height = 960, 720
 screen = pygame.display.set_mode((width, height))
 
 # Background Sound
@@ -44,6 +43,7 @@ class Main:
         self.square_selected = ()
         self.player_clicked = []
 
+        self.legal_moves = self.engine.findLegalMoves()
         self.move_made = False  # Flags when a move is made, so we can perform expensive operations
 
         self.white_isPlayer = True
@@ -52,7 +52,7 @@ class Main:
 
     def run(self):
         # Setting the background colour
-        screen.fill(Colour.BLACK)
+        screen.fill(Colour.WHITE)
 
         self.board.loadImages()
 
@@ -77,14 +77,23 @@ class Main:
                         self.engine.takeback()
                         self.move_made = True
 
+                    if event.key == pygame.K_r:
+                        self.engine = Engine()
+                        self.legal_moves = self.engine.findLegalMoves()
+                        self.square_selected = ()
+                        self.player_clicked = []
+                        self.move_made = False
+
                 # Mouse Events
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if not self.game_over and Is_Turn:
                         # Tracking the mouse's position
                         mouse_pos = pygame.mouse.get_pos()
 
-                        mouse_rank = mouse_pos[0] // self.board.square_size  # Refers to the X position of the mouse, in terms of squares
-                        mouse_file = mouse_pos[1] // self.board.square_size  # Refers to the Y position of the mouse, in terms of squares
+                        # Refers to the X position of the mouse, in terms of squares
+                        mouse_rank = mouse_pos[0] // self.board.square_size
+                        # Refers to the Y position of the mouse, in terms of squares
+                        mouse_file = mouse_pos[1] // self.board.square_size
 
                         if self.square_selected == (mouse_rank, mouse_file):  # The player clicks the same square again
                             # Reset, deselecting the piece
@@ -96,15 +105,18 @@ class Main:
 
                         if len(self.player_clicked) == 2:  # The player has clicked 2 different squares
                             # Move the piece on the first square to the second square
-                            move = Move(self.player_clicked[0], self.player_clicked[1], self.engine.virtual_board)
-                            print(move.getChessNotation())
+                            player_move = Move(self.player_clicked[0], self.player_clicked[1],
+                                               self.engine.virtual_board)
+                            print(player_move.getChessNotation())
 
-                            self.engine.move(move)
-                            self.move_made = True
+                            if player_move in self.legal_moves:
+                                self.engine.move(player_move)
+                                self.move_made = True
                             self.square_selected = ()
                             self.player_clicked = []
 
             if self.move_made:
+                self.legal_moves = self.engine.findLegalMoves()
                 self.move_made = False
 
             # Updates the Screen
