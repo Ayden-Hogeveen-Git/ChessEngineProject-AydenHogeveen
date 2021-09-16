@@ -131,10 +131,6 @@ class Main:
         self.engine = Engine()
         self.drag_drop = DragDrop()
 
-        # Clocks
-        self.white_time = 60
-        self.black_time = 60
-
         # Images
         self.imgs = self.board.images
 
@@ -159,6 +155,11 @@ class Main:
                                       "Takeback")
 
         # Clocks
+        self.starting_time = 180
+
+        self.white_time = self.starting_time
+        self.black_time = self.starting_time
+
         self.white_clock_on = False
         self.black_clock_on = False
 
@@ -241,17 +242,6 @@ class Main:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
 
-                    if event.key == pygame.K_LEFT:
-                        self.engine.takeback()
-                        self.move_made = True
-
-                    if event.key == pygame.K_r:
-                        self.engine = Engine()
-                        self.legal_moves = self.engine.findLegalMoves()
-                        self.square_selected = ()
-                        self.player_clicked = []
-                        self.move_made = False
-
                 # Mouse Events
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if not self.game_over and Is_Turn:
@@ -276,6 +266,12 @@ class Main:
                             self.player_clicked = []
                             self.move_made = False
 
+                            self.white_time = self.starting_time
+                            self.black_time = self.starting_time
+
+                            self.white_clock_on = False
+                            self.black_clock_on = False
+
                         if self.takeback_button.mouseOn(mouse_pos):
                             self.engine.takeback()
                             self.move_made = True
@@ -299,9 +295,12 @@ class Main:
                                     if self.engine.white_to_move:
                                         self.white_clock_on = True
                                         self.black_clock_on = False
-                                    else:
+                                    elif not self.engine.white_to_move:
                                         self.white_clock_on = False
                                         self.black_clock_on = True
+                                    else:
+                                        self.white_clock_on = False
+                                        self.black_clock_on = False
 
                                     self.engine.move(player_move)
                                     self.move_made = True
