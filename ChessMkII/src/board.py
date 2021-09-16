@@ -55,6 +55,7 @@ class Board:
         self.colour = Colour()
         self.colour1 = self.colour.LIGHT_BROWN
         self.colour2 = self.colour.BROWN
+        self.highlight_colour = self.colour.DARK_BROWN
         self.board_colours = (self.colour1, self.colour2)
 
         # Images

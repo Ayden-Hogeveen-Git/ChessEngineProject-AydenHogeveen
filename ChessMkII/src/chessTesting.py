@@ -15,6 +15,8 @@ engine = Engine()
 # Creating the game window
 width, height = 960, 720
 screen = pygame.display.set_mode((width, height))
+clock = pygame.time.Clock()
+fps = 60
 
 # Initializing Fonts
 font = pygame.font.Font("chessAssets/LandasansMedium-ALJ6m.otf", 32)
@@ -101,7 +103,8 @@ class DragDrop:
     def __init__(self):
         self.is_held = False
 
-    def holding_piece(self, rect, pos):
+    @staticmethod
+    def holding_piece(rect, pos):
         rect_x, rect_y, rect_width, rect_height = rect
 
         player_x, player_y = pos
@@ -122,12 +125,15 @@ class Main:
     def __init__(self):
         # Run Conditions
         self.running = True
-        self.clock = pygame.time.Clock()
 
         # Instantiations
         self.board = Board()
         self.engine = Engine()
         self.drag_drop = DragDrop()
+
+        # Clocks
+        self.white_time = 60
+        self.black_time = 60
 
         # Images
         self.imgs = self.board.images
@@ -146,12 +152,22 @@ class Main:
         self.game_over = False
 
         # Buttons
-        self.reset_button = Button(width * 81 / 100, height / 32, width / 8, height / 16, Colour.WHITE, Colour.GREY,
+        self.button_x = width * 81 // 100
+        self.reset_button = Button(self.button_x, height * 4 / 10, width / 8, height / 16, Colour.WHITE, Colour.GREY,
                                    "Reset Board")
-        self.takeback_button = Button(width * 81 / 100, height / 8, width / 8, height / 16, Colour.WHITE, Colour.GREY,
+        self.takeback_button = Button(self.button_x, height * 6 / 10, width / 8, height / 16, Colour.WHITE, Colour.GREY,
                                       "Takeback")
 
-    def highlight_black_legal_moves(self, highlight_square):
+        # Clocks
+        self.white_clock_on = False
+        self.black_clock_on = False
+
+        self.white_time_text = font.render(str(self.white_time), True, Colour.BLACK)
+        self.black_time_text = font.render(str(self.black_time), True, Colour.BLACK)
+
+        self.timer_border_width = width // 330
+
+    def highlight_legal_moves(self, highlight_square):
         """
         Highlights the square selected and the moves possible for the piece on that square
         """
@@ -170,16 +186,30 @@ class Main:
             # Highlight Moves
             for move in self.legal_moves:
                 if move.start_file == file and move.start_rank == rank:
-                    pygame.draw.circle(screen, Colour.GREY,
+                    pygame.draw.circle(screen, self.board.highlight_colour,
                                        (move.end_file * self.board.square_size + self.board.square_size / 2,
                                         move.end_rank * self.board.square_size + self.board.square_size / 2),
                                        self.board.square_size / 6)
 
     def drawUI(self):
-        self.highlight_black_legal_moves(self.square_selected)
+        self.highlight_legal_moves(self.square_selected)
 
         self.reset_button.drawButton()
         self.takeback_button.drawButton()
+
+        white_time_text = font.render(str(int(self.white_time)), True, (0, 0, 0))
+        black_time_text = font.render(str(int(self.black_time)), True, (0, 0, 0))
+
+        pygame.draw.rect(screen, Colour.WHITE, (self.button_x, height // 32, width // 8, height // 16))
+        pygame.draw.rect(screen, Colour.GREY, (self.button_x, height // 32, width // 8, height // 16),
+                         self.timer_border_width)
+
+        pygame.draw.rect(screen, Colour.WHITE, (self.button_x, height * 29 // 32, width // 8, height // 16))
+        pygame.draw.rect(screen, Colour.GREY, (self.button_x, height * 29 // 32, width // 8, height // 16),
+                         self.timer_border_width)
+
+        screen.blit(white_time_text, (self.button_x + width / 64, height / 32 + self.timer_border_width * 4))
+        screen.blit(black_time_text, (self.button_x + width / 64, height * 29 / 32 + self.timer_border_width * 4))
 
     def run(self):
         # Setting the background colour
@@ -189,6 +219,12 @@ class Main:
 
         while self.running:
             self.board.drawGame(self.engine.virtual_board)
+
+            if self.white_clock_on:
+                self.white_time -= 1 / fps
+            elif self.black_clock_on:
+                self.black_time -= 1 / fps
+
             self.drawUI()
 
             Is_Turn = engine.white_to_move and self.white_isPlayer or not engine.white_to_move and self.black_isPlayer
@@ -219,14 +255,13 @@ class Main:
                 # Mouse Events
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if not self.game_over and Is_Turn:
-
                         # Tracking the mouse's position
                         mouse_pos = pygame.mouse.get_pos()
 
-                        mouse_rank = mouse_pos[
-                                         0] // self.board.square_size  # Refers to the X position of the mouse, in terms of squares
-                        mouse_file = mouse_pos[
-                                         1] // self.board.square_size  # Refers to the Y position of the mouse, in terms of squares
+                        # Refers to the X position of the mouse, in terms of squares
+                        mouse_rank = mouse_pos[0] // self.board.square_size
+                        # Refers to the Y position of the mouse, in terms of squares
+                        mouse_file = mouse_pos[1] // self.board.square_size
 
                         # # Make the state 'held'
                         # self.drag_drop.is_held = True
@@ -246,8 +281,7 @@ class Main:
                             self.move_made = True
 
                         if mouse_pos[0] <= 720:
-                            if self.square_selected == (
-                            mouse_rank, mouse_file):  # The player clicks the same square again
+                            if self.square_selected == (mouse_rank, mouse_file):  # The player clicks the same square again
                                 # Reset, deselecting the piece
                                 self.square_selected = ()
                                 self.player_clicked = []
@@ -262,8 +296,16 @@ class Main:
                                 print(player_move.getChessNotation())
 
                                 if player_move in self.legal_moves:
+                                    if self.engine.white_to_move:
+                                        self.white_clock_on = True
+                                        self.black_clock_on = False
+                                    else:
+                                        self.white_clock_on = False
+                                        self.black_clock_on = True
+
                                     self.engine.move(player_move)
                                     self.move_made = True
+
                                 self.square_selected = ()
                                 self.player_clicked = []
 
@@ -290,9 +332,11 @@ class Main:
 
             # Updates the Screen
             pygame.display.update()
-        pygame.quit()
+            clock.tick(fps)
 
 
 if __name__ == "__main__":
     main = Main()
     main.run()
+    pygame.quit()
+    quit()
