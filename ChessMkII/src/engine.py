@@ -12,18 +12,23 @@ class Engine:
         - To access a piece --> rank, file
         - To assign a move --> file, rank
     """
+
     def __init__(self):
         # Board Representation
         self.virtual_board = [
-            ["rook_black", "knight_black", "bishop_black", "queen_black", "King_black", "bishop_black", "knight_black", "rook_black"],  # 8th Rank
-            ["pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black"],  # 7th Rank
+            ["rook_black", "knight_black", "bishop_black", "queen_black", "King_black", "bishop_black", "knight_black",
+             "rook_black"],  # 8th Rank
+            ["pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black", "pawn_black",
+             "pawn_black"],  # 7th Rank
             ["0", "0", "0", "0", "0", "0", "0", "0"],  # 6th Rank
             ["0", "0", "0", "0", "0", "0", "0", "0"],  # 5th Rank
             ["0", "0", "0", "0", "0", "0", "0", "0"],  # 4th Rank
             ["0", "0", "0", "0", "0", "0", "0", "0"],  # 3th Rank
-            ["pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white"],  # 2nd Rank
-            ["rook_white", "knight_white", "bishop_white", "queen_white", "King_white", "bishop_white", "knight_white", "rook_white"]  # 1st Rank
-            ]
+            ["pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white", "pawn_white",
+             "pawn_white"],  # 2nd Rank
+            ["rook_white", "knight_white", "bishop_white", "queen_white", "King_white", "bishop_white", "knight_white",
+             "rook_white"]  # 1st Rank
+        ]
 
         # Turns
         self.white_to_move = True
@@ -32,6 +37,10 @@ class Engine:
         else:
             self.player = "k"
 
+        # King State Variables
+        self.white_king_location = (7, 4)
+        self.black_king_location = (0, 4)
+
         # Game Ending Conditions
         self.is_mate = False
         self.is_stalemate = False
@@ -39,27 +48,63 @@ class Engine:
         # Move Log
         self.move_log = []
 
-    def move(self, move):
+    def makeMove(self, move):
         # Basic Moves
         self.virtual_board[move.start_rank][move.start_file] = "0"
         self.virtual_board[move.end_rank][move.end_file] = move.piece_moved
         self.move_log.append(move)
 
+        # Switch the turn
         self.white_to_move = not self.white_to_move
 
+        # Pawn Promotion
         if move.pawn_promotion:
             if move.piece_moved[-1] == "e":
                 self.virtual_board[move.end_rank][move.end_file] = "queen_white"
             else:
                 self.virtual_board[move.end_rank][move.end_file] = "queen_black"
 
+        # Updating the king's location
+        if move.piece_moved == "King_white":
+            self.white_king_location = (move.end_file, move.end_rank)
+        if move.piece_moved == "King_black":
+            self.black_king_location = (move.end_rank, move.end_file)
+
     def takeback(self):
         if len(self.move_log) != 0:
             move = self.move_log.pop()
             self.virtual_board[move.start_rank][move.start_file] = move.piece_moved
             self.virtual_board[move.end_rank][move.end_file] = move.piece_captured
+            self.white_to_move = not self.white_to_move
 
-        self.white_to_move = not self.white_to_move
+            # Update the king's position if a move is taken back
+            if move.piece_moved == "King_white":
+                self.white_king_location = (move.end_file, move.end_rank)
+            if move.piece_moved == "King_black":
+                self.black_king_location = (move.end_rank, move.end_file)
+
+    def squareAttacked(self, rank, file):
+        """
+        Determines if the opposing player can attack the square at the inputted rank, file
+        """
+        self.white_to_move = not self.white_to_move  # Switch to opponent's turn
+        temp_moves = self.findPseudoLegalMoves()
+        self.white_to_move = not self.white_to_move  # Switches the turn back
+
+        for move in temp_moves:
+            # If next move, the opponent can move there, it is attacked
+            if move.end_rank == rank and move.end_file == file:
+                return True
+        return False
+
+    def check(self):
+        """
+        Determines if the player is in check
+        """
+        if self.white_to_move:
+            return self.squareAttacked(self.white_king_location[0], self.white_king_location[1])
+        else:
+            return self.squareAttacked(self.black_king_location[0], self.black_king_location[1])
 
     def findLegalMoves(self):
         """
@@ -77,17 +122,48 @@ class Engine:
 
         moves = self.findPseudoLegalMoves()
 
+        # We are removing from the list, so we parse backwards
+        for i in range(len(moves) - 1, -1, -1):
+            self.makeMove(moves[i])
+
+            # Switch the turn back to the opponent's turn, so that we can see the possibilities
+            self.white_to_move = not self.white_to_move
+
+            # If in the next move, the opponent can take the king, it will be removed from the list
+            if self.check():
+                moves.remove(moves[i])
+
+            # Set the turn back
+            self.white_to_move = not self.white_to_move
+            self.takeback()
+
+        # There are no legal moves possible, meaning the game is over, and is either checkmate, or stalemate
+        if len(moves) == 0:
+            if self.check():
+                self.is_mate = True
+            else:
+                self.is_stalemate = True
+        else:
+            self.is_mate = False
+            self.is_stalemate = False
+
         return moves
 
     def findPseudoLegalMoves(self):
+        """
+        All of the possible moves to make, based on the rules of how the pieces move, without checks, pins, and
+        all that.
+        """
         # Moves inputted need to be in starting (rank, file), ending (rank, file) order
         moves = []
         for file in range(len(self.virtual_board)):
             for rank in range(len(self.virtual_board)):
                 self.player = self.virtual_board[rank][file][-1]
 
-                if self.player == "e" and self.white_to_move or self.player == "k" and not self.white_to_move:  # White ends in an e, black in a k
-                    piece_type = self.virtual_board[rank][file][0]  # p-pawn, k-knight, b-bishop, r-rook, q-queen, K-king
+                # White ends in an e, black in a k
+                if self.player == "e" and self.white_to_move or self.player == "k" and not self.white_to_move:
+                    piece_type = self.virtual_board[rank][file][
+                        0]  # p-pawn, k-knight, b-bishop, r-rook, q-queen, K-king
 
                     if piece_type == "p":
                         self.getPawnMoves(rank, file, moves)
@@ -106,13 +182,13 @@ class Engine:
     # --- Sliding Pieces --- #
     def getBishopMoves(self, rank, file, moves):
         """
-        Need to check each direction, one square at a time, extending away from the piece, stopping when it hits a piece.
+        Need to check each direction, one square at a time, extending away from the piece, stopping when it hits a piece
         """
         diagonal_directions = [
             (-1, 1),  # Up and Right
-            (1, 1),   # Down and Right
+            (1, 1),  # Down and Right
             (1, -1),  # Down and Left
-            (-1, -1)    # Up and Left
+            (-1, -1)  # Up and Left
         ]
 
         for direction in diagonal_directions:
@@ -135,13 +211,13 @@ class Engine:
 
     def getRookMoves(self, rank, file, moves):
         """
-        Need to check each direction, one square at a time, extending away from the piece, stopping when it hits a piece.
+        Need to check each direction, one square at a time, extending away from the piece, stopping when it hits a piece
         """
         orthogonal_directions = [
             (-1, 0),  # Up
-            (1, 0),   # Down
+            (1, 0),  # Down
             (0, -1),  # Left
-            (0, 1)    # Right
+            (0, 1)  # Right
         ]
 
         for direction in orthogonal_directions:
@@ -180,7 +256,8 @@ class Engine:
         if self.white_to_move:
             if self.virtual_board[rank - 1][file] == "0":  # Checks the square in front of the pawn is empty
                 moves.append(Move((file, rank), (file, rank - 1), self.virtual_board))
-                if rank == 6 and self.virtual_board[rank - 2][file] == "0":  # Checks if a 2 square pawn move is possible
+                # Checks if a 2 square pawn move is possible
+                if rank == 6 and self.virtual_board[rank - 2][file] == "0":
                     moves.append(Move((file, rank), (file, rank - 2), self.virtual_board))
 
             # Adds the pawn captures to the legal moves list
@@ -200,11 +277,11 @@ class Engine:
         if not self.white_to_move:
             if self.virtual_board[rank + 1][file] == "0":  # Checks the square in front of the pawn is empty
                 moves.append(Move((file, rank), (file, rank + 1), self.virtual_board))
-                if rank == 1 and self.virtual_board[rank + 2][file] == "0":  # Checks if a 2 square pawn move is possible
+                # Checks if a 2 square pawn move is possible
+                if rank == 1 and self.virtual_board[rank + 2][file] == "0":
                     moves.append(Move((file, rank), (file, rank + 2), self.virtual_board))
 
             # Adds the pawn captures to the legal moves list
-            # - Still need to add the protection against trying to move off the board
             if file + 1 < 8:
                 # Pawn captures right
                 if self.virtual_board[rank + 1][file + 1] != "0":
@@ -275,16 +352,19 @@ class Move:
         # Special Moves
         self.pawn_promotion = False
 
-        if self.piece_moved[-1] == "e" and self.end_rank == 0 or self.piece_moved[-1] == "k" and self.end_rank == 7:
+        if (self.piece_moved[-1] == "e" and self.piece_moved[0] == "p" and self.end_rank == 0) or \
+                (self.piece_moved[-1] == "k" and self.piece_moved[0] == "p" and self.end_rank == 7):
             self.pawn_promotion = True
 
         self.en_passant = False
 
         # Translations
         self.translate_ranks = {"1": 7, "2": 6, "3": 5, "4": 4, "5": 3, "6": 2, "7": 1, "8": 0}
-        self.translated_ranks = {translate: key for key, translate in self.translate_ranks.items()}  # Reverses a Dictionary
+        self.translated_ranks = {translate: key for key, translate in
+                                 self.translate_ranks.items()}  # Reverses a Dictionary
         self.translate_files = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7}
-        self.translated_files = {translate: key for key, translate in self.translate_files.items()}  # Reverses a Dictionary
+        self.translated_files = {translate: key for key, translate in
+                                 self.translate_files.items()}  # Reverses a Dictionary
 
     def __eq__(self, other):
         """
@@ -302,5 +382,4 @@ class Move:
         return str(self.translated_files[file] + self.translated_ranks[rank])
 
     def getChessNotation(self):
-        
         return self.getRankFile(self.start_file, self.start_rank) + self.getRankFile(self.end_file, self.end_rank)

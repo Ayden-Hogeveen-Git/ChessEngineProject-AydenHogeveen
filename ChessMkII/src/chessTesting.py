@@ -145,6 +145,8 @@ class Main:
         # Game Conditions
         self.white_isPlayer = True
         self.black_isPlayer = False
+        self.white_in_check = False
+        self.black_in_check = False
         self.game_over = False
 
         # Buttons
@@ -219,6 +221,8 @@ class Main:
         self.board.loadImages()
 
         while self.running:
+            Is_Turn = engine.white_to_move and self.white_isPlayer or not engine.white_to_move and self.black_isPlayer
+
             self.board.drawGame(self.engine.virtual_board)
 
             if self.white_clock_on:
@@ -228,8 +232,16 @@ class Main:
 
             self.drawUI()
 
-            Is_Turn = engine.white_to_move and self.white_isPlayer or not engine.white_to_move and self.black_isPlayer
+            if self.engine.is_mate is True and not self.engine.white_to_move:
+                print("Checkmate, white wins")
+                self.white_clock_on = False
+                self.black_clock_on = False
+            elif self.engine.is_mate is True and self.engine.white_to_move:
+                print("Checkmate, black wins")
+                self.white_clock_on = False
+                self.black_clock_on = False
 
+            # --- INPUTS --- #
             # Tracking events
             for event in pygame.event.get():
 
@@ -276,8 +288,16 @@ class Main:
                             self.engine.takeback()
                             self.move_made = True
 
+                            if self.white_clock_on:
+                                self.black_clock_on = True
+                                self.white_clock_on = False
+                            elif self.black_clock_on:
+                                self.white_clock_on = True
+                                self.black_clock_on = False
+
                         if mouse_pos[0] <= 720:
-                            if self.square_selected == (mouse_rank, mouse_file):  # The player clicks the same square again
+                            # The player clicks the same square again
+                            if self.square_selected == (mouse_rank, mouse_file):
                                 # Reset, deselecting the piece
                                 self.square_selected = ()
                                 self.player_clicked = []
@@ -293,16 +313,32 @@ class Main:
 
                                 if player_move in self.legal_moves:
                                     if self.engine.white_to_move:
+                                        # Clock
                                         self.white_clock_on = True
                                         self.black_clock_on = False
+
+                                        # Check Highlights
+                                        if self.engine.squareAttacked(self.engine.white_king_location[0],
+                                                                      self.engine.white_king_location[1]):
+                                            self.white_in_check = True
+
                                     elif not self.engine.white_to_move:
+                                        # Clock
                                         self.white_clock_on = False
                                         self.black_clock_on = True
+
+                                        # Check Highlights
+                                        if self.engine.squareAttacked(self.engine.black_king_location[0],
+                                                                      self.engine.black_king_location[1]):
+                                            self.black_in_check = True
+
                                     else:
                                         self.white_clock_on = False
                                         self.black_clock_on = False
 
-                                    self.engine.move(player_move)
+                                    # self.squareAttacked(self.white_king_location[0], self.white_king_location[1])
+
+                                    self.engine.makeMove(player_move)
                                     self.move_made = True
 
                                 self.square_selected = ()
@@ -328,6 +364,22 @@ class Main:
             if self.move_made:
                 self.legal_moves = self.engine.findLegalMoves()
                 self.move_made = False
+
+            if self.white_in_check:
+                surface = pygame.Surface((self.board.square_size, self.board.square_size))
+                surface.set_alpha(100)
+                surface.fill(Colour.RED)
+                screen.blit(surface,
+                            (self.engine.white_king_location[1] * self.board.square_size,
+                             self.engine.white_king_location[0] * self.board.square_size))
+
+            if self.black_in_check:
+                surface = pygame.Surface((self.board.square_size, self.board.square_size))
+                surface.set_alpha(100)
+                surface.fill(Colour.RED)
+                screen.blit(surface,
+                            (self.engine.black_king_location[1] * self.board.square_size,
+                             self.engine.black_king_location[0] * self.board.square_size))
 
             # Updates the Screen
             pygame.display.update()

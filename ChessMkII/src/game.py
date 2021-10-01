@@ -240,7 +240,7 @@ class Main:
                                         self.white_clock_on = False
                                         self.black_clock_on = False
 
-                                    self.engine.move(player_move)
+                                    self.engine.makeMove(player_move)
                                     self.move_made = True
 
                                 self.square_selected = ()
