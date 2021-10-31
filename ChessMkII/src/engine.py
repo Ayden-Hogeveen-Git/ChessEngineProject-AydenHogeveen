@@ -149,6 +149,11 @@ class Engine:
 
         return moves
 
+    def findLegalMoves(self):
+        moves = self.findPseudoLegalMoves()
+
+        return moves
+
     def findPseudoLegalMoves(self):
         """
         All of the possible moves to make, based on the rules of how the pieces move, without checks, pins, and
@@ -162,8 +167,7 @@ class Engine:
 
                 # White ends in an e, black in a k
                 if self.player == "e" and self.white_to_move or self.player == "k" and not self.white_to_move:
-                    piece_type = self.virtual_board[rank][file][
-                        0]  # p-pawn, k-knight, b-bishop, r-rook, q-queen, K-king
+                    piece_type = self.virtual_board[rank][file][0]  # p-pawn, k-knight, b-bishop, r-rook, q-queen, K-king
 
                     if piece_type == "p":
                         self.getPawnMoves(rank, file, moves)
