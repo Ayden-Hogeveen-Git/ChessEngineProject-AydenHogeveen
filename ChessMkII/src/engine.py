@@ -106,6 +106,49 @@ class Engine:
         else:
             return self.squareAttacked(self.black_king_location[0], self.black_king_location[1])
 
+    # def findLegalMoves(self):
+    #     """
+    #     Moves that are legally allowed in a game of chess, considering checks, pins
+    #
+    #     Basic legal move generation algorithm
+    #     1. Generate all of the possible moves
+    #     2. For each move, make the move
+    #     3. Generate all of the opponent's moves after that move
+    #     4. If any of those moves attack or take the king, the candidate move is not valid
+    #
+    #     If the king can be taken, move is not legal
+    #     """
+    #     # Temporary variables for this algorithm
+    #
+    #     moves = self.findPseudoLegalMoves()
+    #
+    #     # We are removing from the list, so we parse backwards
+    #     for i in range(len(moves) - 1, -1, -1):
+    #         self.makeMove(moves[i])
+    #
+    #         # Switch the turn back to the opponent's turn, so that we can see the possibilities
+    #         self.white_to_move = not self.white_to_move
+    #
+    #         # If in the next move, the opponent can take the king, it will be removed from the list
+    #         if self.check():
+    #             moves.remove(moves[i])
+    #
+    #         # Set the turn back
+    #         self.white_to_move = not self.white_to_move
+    #         self.takeback()
+    #
+    #     # There are no legal moves possible, meaning the game is over, and is either checkmate, or stalemate
+    #     if len(moves) == 0:
+    #         if self.check():
+    #             self.is_mate = True
+    #         else:
+    #             self.is_stalemate = True
+    #     else:
+    #         self.is_mate = False
+    #         self.is_stalemate = False
+    #
+    #     return moves
+
     def findLegalMoves(self):
         """
         Moves that are legally allowed in a game of chess, considering checks, pins
@@ -119,37 +162,6 @@ class Engine:
         If the king can be taken, move is not legal
         """
         # Temporary variables for this algorithm
-
-        moves = self.findPseudoLegalMoves()
-
-        # We are removing from the list, so we parse backwards
-        for i in range(len(moves) - 1, -1, -1):
-            self.makeMove(moves[i])
-
-            # Switch the turn back to the opponent's turn, so that we can see the possibilities
-            self.white_to_move = not self.white_to_move
-
-            # If in the next move, the opponent can take the king, it will be removed from the list
-            if self.check():
-                moves.remove(moves[i])
-
-            # Set the turn back
-            self.white_to_move = not self.white_to_move
-            self.takeback()
-
-        # There are no legal moves possible, meaning the game is over, and is either checkmate, or stalemate
-        if len(moves) == 0:
-            if self.check():
-                self.is_mate = True
-            else:
-                self.is_stalemate = True
-        else:
-            self.is_mate = False
-            self.is_stalemate = False
-
-        return moves
-
-    def findLegalMoves(self):
         moves = self.findPseudoLegalMoves()
 
         return moves

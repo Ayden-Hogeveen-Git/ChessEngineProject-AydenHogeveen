@@ -146,7 +146,7 @@ class Main:
         self.black_isPlayer = False
         self.white_in_check = False
         self.black_in_check = False
-        self.game_over = False
+        self.GAME_OVER = False
 
         # Buttons
         self.button_x = width * 81 // 100
@@ -255,7 +255,7 @@ class Main:
 
                 # Mouse Events
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if not self.game_over and Is_Turn:
+                    if not self.GAME_OVER and Is_Turn:
                         # Tracking the mouse's position
                         mouse_pos = pygame.mouse.get_pos()
 
@@ -277,6 +277,9 @@ class Main:
                             self.player_clicked = []
                             self.move_made = False
 
+                            self.black_in_check = False
+                            self.white_in_check = False
+
                             self.white_time = self.starting_time
                             self.black_time = self.starting_time
 
@@ -294,6 +297,11 @@ class Main:
                                 self.white_clock_on = True
                                 self.black_clock_on = False
 
+                            if self.engine.white_to_move:
+                                self.black_in_check = False
+                            if not self.engine.white_to_move:
+                                self.white_in_check = False
+
                         if mouse_pos[0] <= 720:
                             # The player clicks the same square again
                             if self.square_selected == (mouse_rank, mouse_file):
@@ -308,7 +316,10 @@ class Main:
                                 # Move the piece on the first square to the second square
                                 player_move = Move(self.player_clicked[0], self.player_clicked[1],
                                                    self.engine.virtual_board)
-                                print(player_move.getChessNotation())
+                                if self.white_in_check or self.black_in_check:
+                                    print(f"{player_move.getChessNotation()}+")
+                                else:
+                                    print(player_move.getChessNotation())
 
                                 if player_move in self.legal_moves:
                                     if self.engine.white_to_move:
@@ -360,9 +371,24 @@ class Main:
                 #     if not self.drag_drop.is_held:
                 #         print("dropped at", mouse_rank, mouse_file)
 
+            # Human Moves
             if self.move_made:
                 self.legal_moves = self.engine.findLegalMoves()
                 self.move_made = False
+
+            # AI Moves
+            if not self.GAME_OVER:
+                pass
+
+            # Handling Move Consequences
+            if engine.is_mate:
+                self.GAME_OVER = True
+                if engine.white_to_move:
+                    print("Black Wins!")
+                else:
+                    print("White Wins!")
+            elif engine.is_stalemate:
+                print("Stalemate, draw")
 
             if self.white_in_check:
                 surface = pygame.Surface((self.board.square_size, self.board.square_size))
@@ -383,10 +409,3 @@ class Main:
             # Updates the Screen
             pygame.display.update()
             clock.tick(fps)
-
-
-if __name__ == "__main__":
-    main = Main()
-    main.run()
-    pygame.quit()
-    quit()
