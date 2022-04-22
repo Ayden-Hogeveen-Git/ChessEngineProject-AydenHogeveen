@@ -28,6 +28,7 @@ class Game:
         # --- Gameplay Loop --- #
         screen.fill(Colour.GREY)
 
+
         while self.running:
             self.board.drawGame(self.engine.virtual_board)
 

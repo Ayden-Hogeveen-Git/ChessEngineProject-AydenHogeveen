@@ -55,11 +55,11 @@ class Board:
                                                         (self.square_size, self.square_size))
 
     def drawPieces(self, virtual_board):
-        for x in range(self.dimension):
-            for y in range(self.dimension):
-                piece = virtual_board[y][x]
+        for rank in range(self.dimension):
+            for file in range(self.dimension):
+                piece = virtual_board[file][rank]
                 if piece != "0":
-                    self.screen.blit(self.images[piece], pygame.Rect(x * self.square_size, y * self.square_size,
+                    self.screen.blit(self.images[piece], pygame.Rect(rank * self.square_size, file * self.square_size,
                                                                      self.square_size, self.square_size))
 
     def drawGame(self, virtual_board):
