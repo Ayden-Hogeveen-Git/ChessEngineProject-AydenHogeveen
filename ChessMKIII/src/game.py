@@ -18,6 +18,7 @@ pygame.display.set_icon(pygame.image.load("assets/CHESSICON.png"))
 class Game:
     def __init__(self):
         self.running = True
+        self.holding = False
 
         # --- ChessBoard --- #
         self.board = Board(screen)
@@ -28,7 +29,6 @@ class Game:
         # --- Gameplay Loop --- #
         screen.fill(Colour.GREY)
 
-
         while self.running:
             self.board.drawGame(self.engine.virtual_board)
 
@@ -38,6 +38,14 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mousePos = pygame.mouse.get_pos()
+                    mouseRank = mousePos[0] // self.board.square_size
+                    mouseFile = mousePos[1] // self.board.square_size
+
+                if event.type == pygame.MOUSEBUTTONUP:
+                    print(mouseRank, mouseFile)
 
             pygame.display.update()
         pygame.quit()

@@ -9,7 +9,7 @@ class Engine:
     """
     def __init__(self):
         # --- Board Representation --- #
-        self.fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq e3 0 1"
+        self.fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
         # --- Defaults --- #
         # --- Turns --- #
