@@ -36,6 +36,9 @@ class Engine:
         # --- Move Tracker --- #
         self.moveLog = []
 
+    def generateMoves(self):
+        pass
+
     def boardFromFEN(self):
         piecesFromFEN = {
             "K": "King_white",
