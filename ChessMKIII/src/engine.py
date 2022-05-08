@@ -41,24 +41,28 @@ class Engine:
         self.moveLog = []
 
     def makeMove(self, move):
-        # Basic Move Making
-        self.virtualBoard[move.startRank][move.startFile] = "0"
-        self.virtualBoard[move.endRank][move.endFile] = move.pieceMoved
-        self.moveLog.append(move)
+        if move.startRank == move.endRank and move.startFile == move.endFile:
+            pass
+        else:
 
-        # Switch Turns
-        self.whiteToMove = not self.whiteToMove
+            # Basic Move Making
+            self.virtualBoard[move.startRank][move.startFile] = "0"
+            self.virtualBoard[move.endRank][move.endFile] = move.pieceMoved
+            self.moveLog.append(move)
 
-        # Pawn Promotion
-        if move.pawnPromotion:
-            # if move.pieceMoved[-1] == "e":
-            if self.whiteToMove:
-                self.virtualBoard[move.endRank][move.endFile] = "queen_black"
-            else:
-                self.virtualBoard[move.endRank][move.endFile] = "queen_white"
+            # Switch Turns
+            self.whiteToMove = not self.whiteToMove
 
-        # King King Moves
-        self.updateKings(move)
+            # Pawn Promotion
+            if move.pawnPromotion:
+                # if move.pieceMoved[-1] == "e":
+                if self.whiteToMove:
+                    self.virtualBoard[move.endRank][move.endFile] = "queen_black"
+                else:
+                    self.virtualBoard[move.endRank][move.endFile] = "queen_white"
+
+            # King King Moves
+            self.updateKings(move)
 
     def generateMoves(self):
         pass
@@ -72,22 +76,177 @@ class Engine:
 
                 # White ends in an e, black in a k
                 if self.player == "e" and self.whiteToMove or self.player == "k" and not self.whiteToMove:
-                    piece_type = self.virtualBoard[rank][file][0]  # p-pawn, k-knight, b-bishop, r-rook, q-queen, K-king
+                    pieceType = self.virtualBoard[rank][file][0]  # p-pawn, k-knight, b-bishop, r-rook, q-queen, K-king
 
-                    if piece_type == "p":
+                    if pieceType == "p":
                         self.getPawnMoves(rank, file, legalMoves)
-                    elif piece_type == "k":
+                    elif pieceType == "k":
                         self.getKnightMoves(rank, file, legalMoves)
-                    elif piece_type == "b":
-                        self.getBiBopMoves(rank, file, legalMoves)
-                    elif piece_type == "r":
+                    elif pieceType == "b":
+                        self.getBishopMoves(rank, file, legalMoves)
+                    elif pieceType == "r":
                         self.getRookMoves(rank, file, legalMoves)
-                    elif piece_type == "q":
+                    elif pieceType == "q":
                         self.getQueenMoves(rank, file, legalMoves)
-                    elif piece_type == "K":
+                    elif pieceType == "K":
                         self.getKingMoves(rank, file, legalMoves)
 
         return legalMoves
+
+    # --- Sliding Pieces --- #
+    def getBishopMoves(self, rank, file, moves):
+        """
+        Need to check each direction, one square at a time, extending away from the piece, stopping when it hits a piece
+        """
+        diagonal_directions = [
+            (-1, 1),  # Up and Right
+            (1, 1),  # Down and Right
+            (1, -1),  # Down and Left
+            (-1, -1)  # Up and Left
+        ]
+
+        for direction in diagonal_directions:
+            for i in range(1, 8):
+                end_file = file + direction[1] * i
+                end_rank = rank + direction[0] * i
+
+                if 0 <= end_file < 8 and 0 <= end_rank < 8:  # If the bishop stays on the board
+                    end_piece = self.virtualBoard[end_rank][end_file]
+
+                    if end_piece == "0":  # Square is empty
+                        moves.append(Move(rank, file, end_rank, end_file, self.virtualBoard))
+                    elif end_piece[-1] != self.player:  # Square doesn't contain a friendly piece
+                        moves.append(Move(rank, file, end_rank, end_file, self.virtualBoard))
+                        break
+                    else:
+                        break
+                else:
+                    break
+
+    def getRookMoves(self, rank, file, moves):
+        """
+        Need to check each direction, one square at a time, extending away from the piece, stopping when it hits a piece
+        """
+        orthogonal_directions = [
+            (-1, 0),  # Up
+            (1, 0),  # Down
+            (0, -1),  # Left
+            (0, 1)  # Right
+        ]
+
+        for direction in orthogonal_directions:
+            for i in range(1, 8):
+                end_file = file + direction[1] * i
+                end_rank = rank + direction[0] * i
+
+                if 0 <= end_file < 8 and 0 <= end_rank < 8:  # If the rook stays on the board
+                    end_piece = self.virtualBoard[end_rank][end_file]
+
+                    if end_piece == "0":  # Square is empty
+                        moves.append(Move(rank, file, end_rank, end_file, self.virtualBoard))
+                    elif end_piece[-1] != self.player:  # Square doesn't contain a friendly piece
+                        moves.append(Move(rank, file, end_rank, end_file, self.virtualBoard))
+                        break
+                    else:  # Friendly piece, invalid
+                        break
+                else:  # Off board, invalid
+                    break
+
+    def getQueenMoves(self, rank, file, moves):
+        """
+        Moves like a rook and a bishop, so let's just reuse those methods.
+        """
+        self.getBishopMoves(rank, file, moves)
+        self.getRookMoves(rank, file, moves)
+
+    # --- Different Moving Pieces --- #
+    def getPawnMoves(self, rank, file, moves):
+        """
+        Get all of the possible pawn moves, based on the pawn at the inputted rank and file, and then add those moves
+        to the moves list
+        """
+
+        # --- White Pawns --- #
+        if self.whiteToMove:
+            if self.virtualBoard[rank - 1][file] == "0":  # Checks the square in front of the pawn is empty
+                moves.append(Move(rank, file, rank - 1, file, self.virtualBoard))
+                # Checks if a 2 square pawn move is possible
+                if rank == 6 and self.virtualBoard[rank - 2][file] == "0":
+                    moves.append(Move(rank, file, rank - 2, file, self.virtualBoard))
+
+            # Adds the pawn captures to the legal moves list
+            if file + 1 < 8:
+                # Pawn captures right
+                if self.virtualBoard[rank - 1][file + 1] != "0":
+                    if self.virtualBoard[rank - 1][file + 1][-1] == "k":
+                        moves.append(Move(rank, file, rank - 1, file + 1, self.virtualBoard))
+
+            if file - 1 > -1:
+                # Pawn captures left
+                if self.virtualBoard[rank - 1][file - 1] != "0":
+                    if self.virtualBoard[rank - 1][file - 1][-1] == "k":
+                        moves.append(Move(rank, file, rank - 1, file - 1, self.virtualBoard))
+
+        # --- Black Pawns --- #
+        if not self.whiteToMove:
+            if self.virtualBoard[rank + 1][file] == "0":  # Checks the square in front of the pawn is empty
+                moves.append(Move(rank, file, rank + 1, file, self.virtualBoard))
+                # Checks if a 2 square pawn move is possible
+                if rank == 1 and self.virtualBoard[rank + 2][file] == "0":
+                    moves.append(Move(rank, file, rank + 2, file, self.virtualBoard))
+
+            # Adds the pawn captures to the legal moves list
+            if file + 1 < 8:
+                # Pawn captures right
+                if self.virtualBoard[rank + 1][file + 1] != "0":
+                    if self.virtualBoard[rank + 1][file + 1][-1] == "e":
+                        moves.append(Move(rank, file, rank + 1, file + 1, self.virtualBoard))
+            if file - 1 > -1:
+                # Pawn captures left
+                if self.virtualBoard[rank + 1][file - 1] != "0":  # why need 2 ifs, e is not 0
+                    if self.virtualBoard[rank + 1][file - 1][-1] == "e":
+                        moves.append(Move(rank, file, rank + 1, file - 1, self.virtualBoard))
+
+    def getKnightMoves(self, rank, file, moves):
+        knight_moves = [
+            (2, 1),
+            (1, 2),
+            (-1, 2),
+            (-2, 1),
+            (-2, -1),
+            (-1, -2),
+            (1, -2),
+            (2, -1)
+        ]
+        for move in knight_moves:
+            end_rank = rank + move[0]
+            end_file = file + move[1]
+
+            if 0 <= end_rank < 8 and 0 <= end_file < 8:  # If the Knight stays on the board
+                end_piece = self.virtualBoard[end_rank][end_file]
+                if end_piece[-1] != self.player:  # Not the same colour piece
+                    moves.append(Move(rank, file, end_rank, end_file, self.virtualBoard))
+
+    def getKingMoves(self, rank, file, moves):
+        king_moves = [
+            (1, 0),
+            (1, 1),
+            (0, 1),
+            (-1, 1),
+            (-1, 0),
+            (-1, -1),
+            (0, -1),
+            (1, -1)
+        ]
+        for move in king_moves:
+            end_rank = rank + move[0]
+            end_file = file + move[1]
+
+            if 0 <= end_rank < 8 and 0 <= end_file < 8:  # If the King stays on the board
+                end_piece = self.virtualBoard[end_rank][end_file]
+
+                if end_piece[-1] != self.player:  # Not the same colour piece
+                    moves.append(Move(rank, file, end_rank, end_file, self.virtualBoard))
 
     def updateKings(self, move):
         """

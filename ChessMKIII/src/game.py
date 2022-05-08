@@ -77,12 +77,28 @@ class Game:
 
         # Circles
         # Highlight Moves
-        for move in self.legalMoves:
-            if move.start_file == file and move.start_rank == rank:
-                pygame.draw.circle(screen, Colour.HIGHLIGHT_COLOUR,
-                                   (move.end_file * self.board.squareSize + self.board.squareSize / 2,
-                                    move.end_rank * self.board.squareSize + self.board.squareSize / 2),
-                                   self.board.squareSize / 6)
+        if self.legalMoves:
+            for move in self.legalMoves:
+                if move.startFile == file and move.startRank == rank:
+                    pygame.draw.circle(screen, Colour.HIGHLIGHT_COLOUR,
+                                       (move.endFile * self.board.squareSize + self.board.squareSize / 2,
+                                        move.endRank * self.board.squareSize + self.board.squareSize / 2),
+                                       self.board.squareSize / 6)
+
+                # --- It's a start for dealing with checks
+                if self.engine.whiteToMove and (move.endRank, move.endFile) == self.engine.blackKingCoords:
+                    surface = pygame.Surface((self.board.squareSize, self.board.squareSize))
+                    surface.set_alpha(100)  # Transparency value 0 --> High, 255 --> None
+                    surface.fill(Colour.HIGHLIGHT_CHECK)
+                    screen.blit(surface, (self.engine.blackKingCoords[1] * self.board.squareSize,
+                                          self.engine.blackKingCoords[0] * self.board.squareSize))
+
+                if not self.engine.whiteToMove and (move.endRank, move.endFile) == self.engine.whiteKingCoords:
+                    surface = pygame.Surface((self.board.squareSize, self.board.squareSize))
+                    surface.set_alpha(100)  # Transparency value 0 --> High, 255 --> None
+                    surface.fill(Colour.HIGHLIGHT_CHECK)
+                    screen.blit(surface, (self.engine.whiteKingCoords[1] * self.board.squareSize,
+                                          self.engine.whiteKingCoords[0] * self.board.squareSize))
 
     def run(self):
         # --- Gameplay Loop --- #
@@ -124,7 +140,7 @@ class Game:
                     else:
                         print(f"{self.fileTranslations[endFile]}{self.rankTranslations[endRank]}")
 
-                    if True:  # currentMove in self.legalMoves:
+                    if currentMove in self.legalMoves:
                         if self.engine.whiteToMove:
                             pass
                         elif not self.engine.whiteToMove:
@@ -140,12 +156,14 @@ class Game:
             if self.holding:
                 mousePos = pygame.mouse.get_pos()
                 screen.blit(self.board.images[self.heldPiece], pygame.Rect(mousePos[0] - self.pieceOffset,
-                            mousePos[1] - self.pieceOffset, self.board.squareSize, self.board.squareSize))
+                                                                           mousePos[1] - self.pieceOffset,
+                                                                           self.board.squareSize,
+                                                                           self.board.squareSize))
                 self.highlightLegalMoves(startRank, startFile)
 
             if self.moveMade:
                 # Check for legal moves
-                self.legalMoves = None
+                self.legalMoves = self.engine.findLegalMoves()
                 self.moveMade = False
 
             pygame.display.update()

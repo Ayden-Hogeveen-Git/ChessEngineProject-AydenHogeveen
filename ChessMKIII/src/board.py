@@ -4,11 +4,17 @@ import pygame
 
 # --- Colour Class --- #
 class Colour:
+    # Shades
     WHITE = (255, 255, 255)
     LIGHT_GREY = (100, 100, 100)
     GREY = (45, 45, 45)
     DARK_GREY = (25, 25, 25)
     BLACK = (0, 0, 0)
+
+    # R, G, B
+    RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 255)
 
     # Brown Theme
     BROWN = (181, 136, 98)
@@ -20,6 +26,7 @@ class Colour:
 
     # Highlight Colour
     HIGHLIGHT_COLOUR = LIGHT_GREY
+    HIGHLIGHT_CHECK = RED
 
 
 # --- Board Class --- #
