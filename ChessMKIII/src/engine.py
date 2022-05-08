@@ -14,6 +14,10 @@ class Engine:
         # --- Defaults --- #
         # --- Turns --- #
         self.whiteToMove = True
+        if self.whiteToMove:
+            self.player = "e"
+        else:
+            self.player = "k"
 
         # --- King State --- #
         self.whiteKingCoords = None
@@ -31,13 +35,68 @@ class Engine:
         self.isStalemate = False
 
         # --- Set Up Board --- #
-        self.virtual_board = self.boardFromFEN()
+        self.virtualBoard = self.boardFromFEN()
 
         # --- Move Tracker --- #
         self.moveLog = []
 
+    def makeMove(self, move):
+        # Basic Move Making
+        self.virtualBoard[move.startRank][move.startFile] = "0"
+        self.virtualBoard[move.endRank][move.endFile] = move.pieceMoved
+        self.moveLog.append(move)
+
+        # Switch Turns
+        self.whiteToMove = not self.whiteToMove
+
+        # Pawn Promotion
+        if move.pawnPromotion:
+            # if move.pieceMoved[-1] == "e":
+            if self.whiteToMove:
+                self.virtualBoard[move.endRank][move.endFile] = "queen_black"
+            else:
+                self.virtualBoard[move.endRank][move.endFile] = "queen_white"
+
+        # King King Moves
+        self.updateKings(move)
+
     def generateMoves(self):
         pass
+
+    def findLegalMoves(self):
+        legalMoves = []
+
+        for file in range(len(self.virtualBoard)):
+            for rank in range(len(self.virtualBoard)):
+                self.player = self.virtualBoard[rank][file][-1]
+
+                # White ends in an e, black in a k
+                if self.player == "e" and self.whiteToMove or self.player == "k" and not self.whiteToMove:
+                    piece_type = self.virtualBoard[rank][file][0]  # p-pawn, k-knight, b-bishop, r-rook, q-queen, K-king
+
+                    if piece_type == "p":
+                        self.getPawnMoves(rank, file, legalMoves)
+                    elif piece_type == "k":
+                        self.getKnightMoves(rank, file, legalMoves)
+                    elif piece_type == "b":
+                        self.getBiBopMoves(rank, file, legalMoves)
+                    elif piece_type == "r":
+                        self.getRookMoves(rank, file, legalMoves)
+                    elif piece_type == "q":
+                        self.getQueenMoves(rank, file, legalMoves)
+                    elif piece_type == "K":
+                        self.getKingMoves(rank, file, legalMoves)
+
+        return legalMoves
+
+    def updateKings(self, move):
+        """
+        Add check logic here ??
+        """
+        if move.pieceMoved == "King_white":
+            self.whiteKingCoords = (move.endRank, move.endFile)
+        if move.pieceMoved == "King_black":
+            self.blackKingCoords = (move.endRank, move.endFile)
 
     def boardFromFEN(self):
         piecesFromFEN = {
@@ -59,7 +118,7 @@ class Engine:
             "P": "pawn_white",
             "p": "pawn_black"
         }
-        virtual_board = []
+        virtualBoard = []
 
         tempRank = self.fenString.split("/")
 
@@ -80,7 +139,7 @@ class Engine:
                 if char == "k":
                     self.blackKingCoords = (i, len(rank) - 1)
 
-            virtual_board.append(rank)
+            virtualBoard.append(rank)
 
         # --- Update Stats --- #
         gameState = tempRank[-1].split(" ")
@@ -113,6 +172,32 @@ class Engine:
         else:
             pass
 
-        return virtual_board
+        return virtualBoard
 
 
+# --- Move Class --- #
+class Move:
+    def __init__(self, startRank, startFile, endRank, endFile, virtualBoard):
+        # Start and End Position of the Move
+        self.startRank = startRank
+        self.startFile = startFile
+        self.endRank = endRank
+        self.endFile = endFile
+
+        # Piece Identifiers
+        self.pieceMoved = virtualBoard[self.startRank][self.startFile]
+        self.pieceCaptured = virtualBoard[self.endRank][self.endFile]
+        self.moveId = self.startRank * 1 + self.startFile * 0.1 + self.endRank * 0.01 + self.endFile * 0.001
+
+        # Special Moves
+        self.pawnPromotion = False
+        if (self.pieceMoved[-1] == "e" and self.pieceMoved[0] == "p" and self.endRank == 0) or \
+                (self.pieceMoved[-1] == "k" and self.pieceMoved[0] == "p" and self.endRank == 7):
+            self.pawnPromotion = True
+
+        self.enPassant = False
+
+    def __eq__(self, other):
+        if isinstance(other, Move):
+            return self.moveId == other.moveId
+        return False
