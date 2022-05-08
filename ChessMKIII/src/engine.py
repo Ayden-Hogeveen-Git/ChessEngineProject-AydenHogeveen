@@ -44,7 +44,6 @@ class Engine:
         if move.startRank == move.endRank and move.startFile == move.endFile:
             pass
         else:
-
             # Basic Move Making
             self.virtualBoard[move.startRank][move.startFile] = "0"
             self.virtualBoard[move.endRank][move.endFile] = move.pieceMoved
@@ -239,14 +238,14 @@ class Engine:
             (1, -1)
         ]
         for move in king_moves:
-            end_rank = rank + move[0]
-            end_file = file + move[1]
+            endRank = rank + move[0]
+            endFile = file + move[1]
 
-            if 0 <= end_rank < 8 and 0 <= end_file < 8:  # If the King stays on the board
-                end_piece = self.virtualBoard[end_rank][end_file]
+            if 0 <= endRank < 8 and 0 <= endFile < 8:  # If the King stays on the board
+                end_piece = self.virtualBoard[endRank][endFile]
 
                 if end_piece[-1] != self.player:  # Not the same colour piece
-                    moves.append(Move(rank, file, end_rank, end_file, self.virtualBoard))
+                    moves.append(Move(rank, file, endRank, endFile, self.virtualBoard))
 
     def updateKings(self, move):
         """

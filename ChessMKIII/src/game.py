@@ -153,7 +153,7 @@ class Game:
 
                     self.heldPiece = None
 
-            if self.holding:
+            if self.holding and self.heldPiece != "0":
                 mousePos = pygame.mouse.get_pos()
                 screen.blit(self.board.images[self.heldPiece], pygame.Rect(mousePos[0] - self.pieceOffset,
                                                                            mousePos[1] - self.pieceOffset,
