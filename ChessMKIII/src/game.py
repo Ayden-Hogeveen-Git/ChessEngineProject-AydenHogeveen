@@ -85,7 +85,7 @@ class Game:
                                         move.endRank * self.board.squareSize + self.board.squareSize / 2),
                                        self.board.squareSize / 6)
 
-                # --- It's a start for dealing with checks
+                # --- It's a start for dealing with checks --- #
                 if self.engine.whiteToMove and (move.endRank, move.endFile) == self.engine.blackKingCoords:
                     surface = pygame.Surface((self.board.squareSize, self.board.squareSize))
                     surface.set_alpha(100)  # Transparency value 0 --> High, 255 --> None
@@ -113,6 +113,11 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
+
+                    if event.key == pygame.K_LEFT:
+                        # set up takebacks
+                        self.engine.takeback()
+                        self.moveMade = True
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mousePos = pygame.mouse.get_pos()
@@ -152,6 +157,7 @@ class Game:
                         self.moveMade = True
 
                     self.heldPiece = None
+
 
             if self.holding and self.heldPiece != "0":
                 mousePos = pygame.mouse.get_pos()

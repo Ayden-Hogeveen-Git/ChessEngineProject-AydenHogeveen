@@ -27,8 +27,8 @@ class Engine:
         self.blackCastling = {"kingside": False, "queenside": False}
 
         # --- Google En Passant --- #
-        self.enPassantPossible = False
-        self.enPassantCoords = None
+        self.enPassantPossibleWhite = False
+        self.enPassantPossibleBlack = False
 
         # --- Game Conditions --- #
         self.isMate = False
@@ -60,13 +60,56 @@ class Engine:
                 else:
                     self.virtualBoard[move.endRank][move.endFile] = "queen_white"
 
-            # King King Moves
+            # En Passant
+            if move.enPassant:
+                print("possible en passant")
+
+            # King Moves
             self.updateKings(move)
 
-    def generateMoves(self):
-        pass
+    def takeback(self):
+        if len(self.moveLog) != 0:
+            move = self.moveLog.pop()
+            self.virtualBoard[move.startRank][move.startFile] = move.pieceMoved
+            self.virtualBoard[move.endRank][move.endFile] = move.pieceCaptured
+            self.whiteToMove = not self.whiteToMove
 
-    def findLegalMoves(self):
+            # Update King locations
+            self.updateKings(move)
+        else:
+            print("No moves to undo")
+
+    def generateMoves(self, psuedoLegalMoves):
+        if len(self.moveLog) > 0:
+            if self.moveLog[-1].twoSquareAdvance and self.whiteToMove:
+                pass
+
+                """
+                # --- White Pawns --- #
+                # En passant right
+                if self.virtualBoard[rank][file + 1][-1] == "k" and self.enPassantPossibleWhite:
+                    moves.append(Move(rank, file, rank - 1, file + 1, self.virtualBoard))
+                    self.enPassantPossibleWhite = False    
+                    
+                # En passant left
+                if self.virtualBoard[rank][file - 1][-1] == "k" and self.enPassantPossibleWhite:
+                    moves.append(Move(rank, file, rank - 1, file - 1, self.virtualBoard))
+                    self.enPassantPossibleWhite = False
+                    
+                # -- Black Pawns --- #
+                # En passant right
+                if self.virtualBoard[rank][file + 1][-1] == "e" and self.enPassantPossibleBlack:
+                    moves.append(Move(rank, file, rank + 1, file + 1, self.virtualBoard))
+                    self.enPassantPossibleBlack = False
+                
+                # En passant left
+                if self.virtualBoard[rank][file - 1][-1] == "e" and self.enPassantPossibleBlack:
+                    moves.append(Move(rank, file, rank + 1, file - 1, self.virtualBoard))
+                    self.enPassantPossibleBlack = False
+                """
+        return psuedoLegalMoves
+
+    def findPieceLegalMoves(self):
         legalMoves = []
 
         for file in range(len(self.virtualBoard)):
@@ -91,6 +134,9 @@ class Engine:
                         self.getKingMoves(rank, file, legalMoves)
 
         return legalMoves
+
+    def findLegalMoves(self):
+        return self.generateMoves(self.findPieceLegalMoves())
 
     # --- Sliding Pieces --- #
     def getBishopMoves(self, rank, file, moves):
@@ -176,15 +222,13 @@ class Engine:
             # Adds the pawn captures to the legal moves list
             if file + 1 < 8:
                 # Pawn captures right
-                if self.virtualBoard[rank - 1][file + 1] != "0":
-                    if self.virtualBoard[rank - 1][file + 1][-1] == "k":
-                        moves.append(Move(rank, file, rank - 1, file + 1, self.virtualBoard))
+                if self.virtualBoard[rank - 1][file + 1][-1] == "k":
+                    moves.append(Move(rank, file, rank - 1, file + 1, self.virtualBoard))
 
             if file - 1 > -1:
                 # Pawn captures left
-                if self.virtualBoard[rank - 1][file - 1] != "0":
-                    if self.virtualBoard[rank - 1][file - 1][-1] == "k":
-                        moves.append(Move(rank, file, rank - 1, file - 1, self.virtualBoard))
+                if self.virtualBoard[rank - 1][file - 1][-1] == "k":
+                    moves.append(Move(rank, file, rank - 1, file - 1, self.virtualBoard))
 
         # --- Black Pawns --- #
         if not self.whiteToMove:
@@ -193,18 +237,18 @@ class Engine:
                 # Checks if a 2 square pawn move is possible
                 if rank == 1 and self.virtualBoard[rank + 2][file] == "0":
                     moves.append(Move(rank, file, rank + 2, file, self.virtualBoard))
+                    self.enPassantPossibleWhite = True
 
             # Adds the pawn captures to the legal moves list
             if file + 1 < 8:
                 # Pawn captures right
-                if self.virtualBoard[rank + 1][file + 1] != "0":
-                    if self.virtualBoard[rank + 1][file + 1][-1] == "e":
-                        moves.append(Move(rank, file, rank + 1, file + 1, self.virtualBoard))
+                if self.virtualBoard[rank + 1][file + 1][-1] == "e":
+                    moves.append(Move(rank, file, rank + 1, file + 1, self.virtualBoard))
+
             if file - 1 > -1:
                 # Pawn captures left
-                if self.virtualBoard[rank + 1][file - 1] != "0":  # why need 2 ifs, e is not 0
-                    if self.virtualBoard[rank + 1][file - 1][-1] == "e":
-                        moves.append(Move(rank, file, rank + 1, file - 1, self.virtualBoard))
+                if self.virtualBoard[rank + 1][file - 1][-1] == "e":
+                    moves.append(Move(rank, file, rank + 1, file - 1, self.virtualBoard))
 
     def getKnightMoves(self, rank, file, moves):
         knight_moves = [
@@ -354,6 +398,11 @@ class Move:
             self.pawnPromotion = True
 
         self.enPassant = False
+
+        self.twoSquareAdvance = False
+        if (self.pieceMoved[-1] == "e" and self.pieceMoved[0] == "p" and self.startRank - self.endRank == 2) or \
+                (self.pieceMoved[-1] == "k" and self.pieceMoved[0] == "p" and self.endRank - self.startRank == 2):
+            self.twoSquareAdvance = True
 
     def __eq__(self, other):
         if isinstance(other, Move):
