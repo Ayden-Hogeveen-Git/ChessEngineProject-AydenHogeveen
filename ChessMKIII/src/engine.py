@@ -20,8 +20,8 @@ class Engine:
             self.player = "k"
 
         # --- King State --- #
-        self.whiteKingCoords = None
-        self.blackKingCoords = None
+        self.whiteKingCoords = (7, 4)
+        self.blackKingCoords = (0, 4)
 
         self.whiteCastling = {"kingside": False, "queenside": False}
         self.blackCastling = {"kingside": False, "queenside": False}
@@ -79,8 +79,48 @@ class Engine:
         else:
             print("No moves to undo")
 
+    def evalChecks(self, moves):
+        """
+        Evaluates which moves, if any, in the position are checks
+        :param moves: Available moves in the position
+        :return checks: arr (list of moves that attack the king, empty if no checks are found)
+        """
+        checks = []
+
+        for move in moves:
+            if self.whiteToMove:
+                if move.endFile == self.whiteKingCoords[0] and move.endRank == self.whiteKingCoords[1]:
+                    checks.append(move)
+            else:
+                if move.endFile == self.blackKingCoords[0] and move.endRank == self.blackKingCoords[1]:
+                    checks.append(move)
+
+        return checks
+
     def generateMoves(self, psuedoLegalMoves):
+        """
+        Removes illegal moves from the list of possible piece moves in the current position
+        :param psuedoLegalMoves:
+        :return:
+        """
         if len(self.moveLog) > 0:
+            """
+            Check logic
+            We have each kings coordinates, if those coordinates are a valid move for the other team, the king is
+            in check and must do something about it.
+            
+            check each of the opponent's next legal moves to see they could take the king
+            
+            1. switch to opponent's turn
+                2. generateMoves and store in a variable
+                3. if any of those moves could take the king, then it is a check, otherwise false
+            """
+            moves = self.evalChecks(psuedoLegalMoves)
+            if moves:
+                for check in moves:
+                    print(str(check) + "+", end=", ")
+                print()
+
             if self.moveLog[-1].twoSquareAdvance and self.whiteToMove:
                 pass
 
@@ -113,7 +153,7 @@ class Engine:
         legalMoves = []
 
         for file in range(len(self.virtualBoard)):
-            for rank in range(len(self.virtualBoard)):
+            for rank in range(len(self.virtualBoard[file])):
                 self.player = self.virtualBoard[rank][file][-1]
 
                 # White ends in an e, black in a k
@@ -300,6 +340,9 @@ class Engine:
         if move.pieceMoved == "King_black":
             self.blackKingCoords = (move.endRank, move.endFile)
 
+        # print(f"White: {self.whiteKingCoords}")
+        # print(f"Black: {self.blackKingCoords}")
+
     def boardFromFEN(self):
         piecesFromFEN = {
             "K": "King_white",
@@ -404,7 +447,31 @@ class Move:
                 (self.pieceMoved[-1] == "k" and self.pieceMoved[0] == "p" and self.endRank - self.startRank == 2):
             self.twoSquareAdvance = True
 
+        # --- File Num to Letter for str --- #
+        self.intToLetter = {
+            0: "a",
+            1: "b",
+            2: "c",
+            3: "d",
+            4: "e",
+            5: "f",
+            6: "g",
+            7: "h",
+        }
+
     def __eq__(self, other):
+        """
+        Overloading equals method to compare move objects based on moveId
+        :param other: other move object to compare
+        :return: True if moveId is the same, False otherwise
+        """
         if isinstance(other, Move):
             return self.moveId == other.moveId
         return False
+
+    def __str__(self):
+        """
+        Overloading string method
+        :return:
+        """
+        return f"{self.intToLetter[self.startFile]}{self.startRank}-{self.intToLetter[self.endFile]}{self.endRank}"
