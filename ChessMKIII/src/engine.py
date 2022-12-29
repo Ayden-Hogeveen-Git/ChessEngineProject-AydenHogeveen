@@ -6,12 +6,15 @@ class Engine:
     - Since last capture or pawn move
     To Do: Full move number
     - Increments after blacks move
+
+    Saved FEN positions
+    - start position: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    - endgame: 8/8/8/8/5R2/2pk4/5K2/8 b - - 0 1
     """
     def __init__(self):
         # --- Board Representation --- #
-        self.fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        self.fenString = "8/8/8/8/5R2/2pk4/5K2/8 b - - 0 1"
 
-        # --- Defaults --- #
         # --- Turns --- #
         self.whiteToMove = True
         if self.whiteToMove:
@@ -54,7 +57,6 @@ class Engine:
 
             # Pawn Promotion
             if move.pawnPromotion:
-                # if move.pieceMoved[-1] == "e":
                 if self.whiteToMove:
                     self.virtualBoard[move.endRank][move.endFile] = "queen_black"
                 else:
@@ -79,75 +81,95 @@ class Engine:
         else:
             print("No moves to undo")
 
-    def evalChecks(self, moves):
-        """
-        Evaluates which moves, if any, in the position are checks
-        :param moves: Available moves in the position
-        :return checks: arr (list of moves that attack the king, empty if no checks are found)
-        """
-        checks = []
-
-        for move in moves:
-            if self.whiteToMove:
-                if move.endFile == self.whiteKingCoords[0] and move.endRank == self.whiteKingCoords[1]:
-                    checks.append(move)
-            else:
-                if move.endFile == self.blackKingCoords[0] and move.endRank == self.blackKingCoords[1]:
-                    checks.append(move)
-
-        return checks
-
-    def generateMoves(self, psuedoLegalMoves):
+    def generateMoves(self, psuedoLegal):
         """
         Removes illegal moves from the list of possible piece moves in the current position
-        :param psuedoLegalMoves:
+        :param psuedoLegal:
         :return:
         """
-        if len(self.moveLog) > 0:
-            """
-            Check logic
-            We have each kings coordinates, if those coordinates are a valid move for the other team, the king is
-            in check and must do something about it.
-            
-            check each of the opponent's next legal moves to see they could take the king
-            
-            1. switch to opponent's turn
-                2. generateMoves and store in a variable
-                3. if any of those moves could take the king, then it is a check, otherwise false
-            """
-            moves = self.evalChecks(psuedoLegalMoves)
-            if moves:
-                for check in moves:
-                    print(str(check) + "+", end=", ")
-                print()
+        legal = []
+        """
+        Basic legal moves:
+        1. Generate all possible legal moves
+        2. Make each move
+        3. Generate all of opponents moves
+        4. If any of those moves take the king: prune the move
+        """
 
-            if self.moveLog[-1].twoSquareAdvance and self.whiteToMove:
-                pass
+        """
+        Check logic
+        We have each kings coordinates, if those coordinates are a valid move for the other team, the king is
+        in check and must do something about it.
+        
+        check each of the opponent's next legal moves to see they could take the king
+        
+        1. switch to opponent's turn
+            2. generateMoves and store in a variable
+            3. if any of those moves could take the king, then it is a check, otherwise false
+        """
+        # castling goes here
 
-                """
-                # --- White Pawns --- #
-                # En passant right
-                if self.virtualBoard[rank][file + 1][-1] == "k" and self.enPassantPossibleWhite:
-                    moves.append(Move(rank, file, rank - 1, file + 1, self.virtualBoard))
-                    self.enPassantPossibleWhite = False    
-                    
-                # En passant left
-                if self.virtualBoard[rank][file - 1][-1] == "k" and self.enPassantPossibleWhite:
-                    moves.append(Move(rank, file, rank - 1, file - 1, self.virtualBoard))
-                    self.enPassantPossibleWhite = False
-                    
-                # -- Black Pawns --- #
-                # En passant right
-                if self.virtualBoard[rank][file + 1][-1] == "e" and self.enPassantPossibleBlack:
-                    moves.append(Move(rank, file, rank + 1, file + 1, self.virtualBoard))
-                    self.enPassantPossibleBlack = False
+        # --- Pruning Illegal Moves --- #
+        for i in range(len(psuedoLegal) - 1, -1, -1):
+            self.makeMove(psuedoLegal[i])
+            self.whiteToMove = not self.whiteToMove
+
+            oppMoves = self.findPieceLegalMoves()
+            if not self.check(oppMoves):
+                legal.append(psuedoLegal[i])
+
+            self.whiteToMove = not self.whiteToMove
+            self.takeback()
+
+        # --- Game Ends by Checkmate or Stalemate --- #
+        if len(legal) == 0:
+            print("Checkmate! or stalemate.")
+
+        # Had this line before, now it breaks something, hopefully, deleting it won't break something
+        # if len(self.moveLog) > 0:
+        #     if self.moveLog[-1].twoSquareAdvance and self.whiteToMove:
+        #         pass
+
+            """
+            # --- White Pawns --- #
+            # En passant right
+            if self.virtualBoard[rank][file + 1][-1] == "k" and self.enPassantPossibleWhite:
+                moves.append(Move(rank, file, rank - 1, file + 1, self.virtualBoard))
+                self.enPassantPossibleWhite = False    
                 
-                # En passant left
-                if self.virtualBoard[rank][file - 1][-1] == "e" and self.enPassantPossibleBlack:
-                    moves.append(Move(rank, file, rank + 1, file - 1, self.virtualBoard))
-                    self.enPassantPossibleBlack = False
-                """
-        return psuedoLegalMoves
+            # En passant left
+            if self.virtualBoard[rank][file - 1][-1] == "k" and self.enPassantPossibleWhite:
+                moves.append(Move(rank, file, rank - 1, file - 1, self.virtualBoard))
+                self.enPassantPossibleWhite = False
+                
+            # -- Black Pawns --- #
+            # En passant right
+            if self.virtualBoard[rank][file + 1][-1] == "e" and self.enPassantPossibleBlack:
+                moves.append(Move(rank, file, rank + 1, file + 1, self.virtualBoard))
+                self.enPassantPossibleBlack = False
+            
+            # En passant left
+            if self.virtualBoard[rank][file - 1][-1] == "e" and self.enPassantPossibleBlack:
+                moves.append(Move(rank, file, rank + 1, file - 1, self.virtualBoard))
+                self.enPassantPossibleBlack = False
+            """
+        return legal
+
+    def check(self, oppMoves):
+        """
+        Determines if the player is in check
+        :param oppMoves: arr (list of move objects to be evaluated)
+        :return: bool (True if player is in check, False otherwise)
+        """
+        if self.whiteToMove:
+            for move in oppMoves:
+                if move.endRank == self.whiteKingCoords[0] and move.endFile == self.whiteKingCoords[1]:
+                    return True
+                return False
+        for move in oppMoves:
+            if move.endRank == self.blackKingCoords[0] and move.endFile == self.blackKingCoords[1]:
+                return True
+        return False
 
     def findPieceLegalMoves(self):
         legalMoves = []
@@ -325,7 +347,7 @@ class Engine:
             endRank = rank + move[0]
             endFile = file + move[1]
 
-            if 0 <= endRank < 8 and 0 <= endFile < 8:  # If the King stays on the board
+            if 0 <= endRank <= 7 and 0 <= endFile <= 7:  # If the King stays on the board
                 end_piece = self.virtualBoard[endRank][endFile]
 
                 if end_piece[-1] != self.player:  # Not the same colour piece
@@ -423,16 +445,20 @@ class Engine:
 # --- Move Class --- #
 class Move:
     def __init__(self, startRank, startFile, endRank, endFile, virtualBoard):
-        # Start and End Position of the Move
-        self.startRank = startRank
-        self.startFile = startFile
-        self.endRank = endRank
-        self.endFile = endFile
+        try:
+            # Start and End Position of the Move
+            self.startRank = startRank
+            self.startFile = startFile
+            self.endRank = endRank
+            self.endFile = endFile
 
-        # Piece Identifiers
-        self.pieceMoved = virtualBoard[self.startRank][self.startFile]
-        self.pieceCaptured = virtualBoard[self.endRank][self.endFile]
-        self.moveId = self.startRank * 1 + self.startFile * 0.1 + self.endRank * 0.01 + self.endFile * 0.001
+            # Piece Identifiers
+            self.pieceMoved = virtualBoard[self.startRank][self.startFile]
+            self.pieceCaptured = virtualBoard[self.endRank][self.endFile]
+            self.moveId = self.startRank * 1 + self.startFile * 0.1 + self.endRank * 0.01 + self.endFile * 0.001
+        except IndexError:
+            print("Cannot move piece off of board.")
+
 
         # Special Moves
         self.pawnPromotion = False

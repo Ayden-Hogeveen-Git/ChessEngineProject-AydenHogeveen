@@ -138,26 +138,26 @@ class Game:
                     endRank = mousePos[1] // self.board.squareSize
                     endFile = mousePos[0] // self.board.squareSize
 
-                    currentMove = Move(startRank, startFile, endRank, endFile, self.engine.virtualBoard)
+                    if 0 <= endFile <= 7 and 0 <= endRank <= 7:
+                        currentMove = Move(startRank, startFile, endRank, endFile, self.engine.virtualBoard)
 
-                    if self.whiteInCheck or self.blackInCheck:
-                        print(f"{self.fileTranslations[endFile]}{self.rankTranslations[endRank]}+")
-                    else:
-                        print(f"{self.fileTranslations[endFile]}{self.rankTranslations[endRank]}")
-
-                    if currentMove in self.legalMoves:
-                        if self.engine.whiteToMove:
-                            pass
-                        elif not self.engine.whiteToMove:
-                            pass
+                        if self.whiteInCheck or self.blackInCheck:
+                            print(f"{self.fileTranslations[endFile]}{self.rankTranslations[endRank]}+")
                         else:
-                            pass
+                            print(f"{self.fileTranslations[endFile]}{self.rankTranslations[endRank]}")
 
-                        self.engine.makeMove(currentMove)
-                        self.moveMade = True
+                        if currentMove in self.legalMoves:
+                            if self.engine.whiteToMove:
+                                pass
+                            elif not self.engine.whiteToMove:
+                                pass
+                            else:
+                                pass
+
+                            self.engine.makeMove(currentMove)
+                            self.moveMade = True
 
                     self.heldPiece = None
-
 
             if self.holding and self.heldPiece != "0":
                 mousePos = pygame.mouse.get_pos()

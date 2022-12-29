@@ -35,7 +35,8 @@ class Board:
         # Board Dimensions
         self.dimension = 8
         self.screen = screen
-        self.w = self.h = screen.get_height()
+        self.buffer = 20
+        self.w = self.h = screen.get_height() - self.buffer
 
         self.squareSize = self.w // self.dimension
 
