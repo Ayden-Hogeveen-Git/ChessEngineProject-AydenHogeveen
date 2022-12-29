@@ -115,9 +115,12 @@ class Game:
                         self.running = False
 
                     if event.key == pygame.K_LEFT:
-                        # set up takebacks
                         self.engine.takeback()
                         self.moveMade = True
+                    if event.key == pygame.K_r:
+                        for i in range(len(self.engine.moveLog)):
+                            self.engine.takeback()
+                            self.moveMade = True
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mousePos = pygame.mouse.get_pos()
@@ -147,13 +150,6 @@ class Game:
                             print(f"{self.fileTranslations[endFile]}{self.rankTranslations[endRank]}")
 
                         if currentMove in self.legalMoves:
-                            if self.engine.whiteToMove:
-                                pass
-                            elif not self.engine.whiteToMove:
-                                pass
-                            else:
-                                pass
-
                             self.engine.makeMove(currentMove)
                             self.moveMade = True
 
