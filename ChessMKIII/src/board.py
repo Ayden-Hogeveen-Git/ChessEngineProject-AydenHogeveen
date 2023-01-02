@@ -36,7 +36,7 @@ class Board:
         self.dimension = 8
         self.screen = screen
         self.buffer = 20
-        self.w = self.h = screen.get_height() - self.buffer
+        self.w = self.h = screen.get_height()
 
         self.squareSize = self.w // self.dimension
 
@@ -56,9 +56,8 @@ class Board:
             for file in range(self.dimension):
                 squareColours = self.boardColours[((rank + file) % 2)]
 
-                pygame.draw.rect(self.screen, squareColours,
-                                 (rank * self.squareSize, file * self.squareSize, self.squareSize,
-                                  self.squareSize))
+                pygame.draw.rect(self.screen, squareColours, (rank * self.squareSize, file * self.squareSize,
+                                                              self.squareSize, self.squareSize))
 
     def loadImages(self):
         pieces = ["pawn_white", "rook_white", "knight_white", "bishop_white", "queen_white", "King_white",

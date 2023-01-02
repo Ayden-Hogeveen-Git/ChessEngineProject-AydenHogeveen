@@ -7,13 +7,16 @@ class Engine:
     To Do: Full move number
     - Increments after blacks move
 
+    To Do:
+    fix issues with king position, we're losing the kings every once in a while
+
     Saved FEN positions
     - start position: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
     - endgame: 8/8/8/8/5R2/2pk4/5K2/8 b - - 0 1
     """
     def __init__(self):
         # --- Board Representation --- #
-        self.fenString = "8/8/8/8/5R2/2pk4/5K2/8 b - - 0 1"
+        self.fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
         # --- Turns --- #
         self.whiteToMove = True
@@ -182,6 +185,33 @@ class Engine:
         for move in oppMoves:
             if move.endRank == self.blackKingCoords[0] and move.endFile == self.blackKingCoords[1]:
                 return True
+        return False
+
+    def moveIsCheck(self, move):
+        """
+        Determines if a single move is a check
+        :param move: Move Object
+        :return: True if move is a check, False otherwise
+        """
+        moves = []
+
+        piece = move.pieceMoved[:1]
+
+        if piece == "p":
+            self.getPawnMoves(move.endRank, move.endFile, moves)
+        elif piece == "k":
+            self.getKnightMoves(move.endRank, move.endFile, moves)
+        elif piece == "b":
+            self.getBishopMoves(move.endRank, move.endFile, moves)
+        elif piece == "r":
+            self.getRookMoves(move.endRank, move.endFile, moves)
+        elif piece == "q":
+            self.getQueenMoves(move.endRank, move.endFile, moves)
+        else:
+            moves = []
+
+        if self.check(moves):
+            return True
         return False
 
     def findLegalMoves(self):
