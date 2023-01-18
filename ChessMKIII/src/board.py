@@ -52,6 +52,10 @@ class Board:
         self.gamestate = []
 
     def createBoard(self):
+        """
+        Creates and Draws the 64 squares
+        :return: None
+        """
         for rank in range(self.dimension):
             for file in range(self.dimension):
                 squareColours = self.boardColours[((rank + file) % 2)]
@@ -60,6 +64,10 @@ class Board:
                                                               self.squareSize, self.squareSize))
 
     def loadImages(self):
+        """
+        Loads images for the chess pieces
+        :return: None
+        """
         pieces = ["pawn_white", "rook_white", "knight_white", "bishop_white", "queen_white", "King_white",
                   "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "King_black"]
         for piece in pieces:
@@ -67,6 +75,11 @@ class Board:
                                                         (self.squareSize, self.squareSize))
 
     def drawPieces(self, virtual_board):
+        """
+        Draws each piece on the board, according to the board representation's virtual board
+        :param virtual_board: arr (2D array representing the current board state)
+        :return: None
+        """
         for rank in range(self.dimension):
             for file in range(self.dimension):
                 piece = virtual_board[file][rank]
@@ -75,6 +88,11 @@ class Board:
                                                                      self.squareSize, self.squareSize))
 
     def drawGame(self, virtual_board):
+        """
+        Main function for drawing chess game, calls above helper functions
+        :param virtual_board: arr (2D array representing the current board state)
+        :return: None
+        """
         self.loadImages()
         self.createBoard()
         self.drawPieces(virtual_board)

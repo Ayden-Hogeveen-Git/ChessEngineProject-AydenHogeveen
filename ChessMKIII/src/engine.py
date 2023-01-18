@@ -1,14 +1,10 @@
 # engine.py
 class Engine:
     """
-    Based on FEN requirements
-    To Do: Half move clock
-    - Since last capture or pawn move
-    To Do: Full move number
-    - Increments after blacks move
-
     To Do:
     fix issues with king position, we're losing the kings every once in a while
+    - might be issues with notation
+    - white/black king pos being opposite
 
     Saved FEN positions
     - start position: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -47,6 +43,12 @@ class Engine:
         self.moveLog = []
 
     def makeMove(self, move):
+        """
+        Takes a move object as a parameter and makes that move on the virtual board, updating it to match the
+        user board representation
+        :param move: move object (move to be made)
+        :return: None
+        """
         if move.startRank == move.endRank and move.startFile == move.endFile:
             pass
         else:
@@ -73,6 +75,11 @@ class Engine:
             self.updateKings(move)
 
     def takeback(self):
+        """
+        Takes back the previously taken move, and updates the board state accordingly, uses the move log to refer
+        to previous moves
+        :return: None
+        """
         if len(self.moveLog) != 0:
             move = self.moveLog.pop()
             self.virtualBoard[move.startRank][move.startFile] = move.pieceMoved
@@ -85,6 +92,10 @@ class Engine:
             print("No moves to undo")
 
     def findPieceLegalMoves(self):
+        """
+        Finds the moves that each piece can make according to the rules for each piece in isolation
+        :return legalMoves: arr (list of moves the player could make)
+        """
         legalMoves = []
 
         for file in range(len(self.virtualBoard)):
@@ -110,11 +121,54 @@ class Engine:
 
         return legalMoves
 
+    def check(self, oppMoves):
+        """
+        Determines if possible moves will be illegal
+        :param oppMoves: arr (list of move objects to be evaluated)
+        :return: bool (True if player is in check, False otherwise)
+        """
+        if self.whiteToMove:
+            for move in oppMoves:
+                if move.endRank == self.whiteKingCoords[0] and move.endFile == self.whiteKingCoords[1]:
+                    return True
+            return False
+        for move in oppMoves:
+            if move.endRank == self.blackKingCoords[0] and move.endFile == self.blackKingCoords[1]:
+                return True
+        return False
+
+    def moveIsCheck(self, move):
+        """
+        Determines if a single move is a check
+        :param move: Move Object
+        :return: True if move is a check, False otherwise
+        """
+        moves = []
+
+        piece = move.pieceMoved[:1]
+
+        if piece == "p":
+            self.getPawnMoves(move.endRank, move.endFile, moves)
+        elif piece == "k":
+            self.getKnightMoves(move.endRank, move.endFile, moves)
+        elif piece == "b":
+            self.getBishopMoves(move.endRank, move.endFile, moves)
+        elif piece == "r":
+            self.getRookMoves(move.endRank, move.endFile, moves)
+        elif piece == "q":
+            self.getQueenMoves(move.endRank, move.endFile, moves)
+        else:
+            moves = []
+
+        if self.check(moves):
+            return True
+        return False
+
     def generateMoves(self, psuedoLegal):
         """
         Removes illegal moves from the list of possible piece moves in the current position
-        :param psuedoLegal:
-        :return:
+        :param psuedoLegal: arr (list of moves a player could make with the pieces, before accounting for the rules)
+        :return legal: arr (list of moves a player can make in the position)
         """
         legal = []
         """
@@ -171,56 +225,21 @@ class Engine:
 
         return legal
 
-    def check(self, oppMoves):
-        """
-        Determines if possible moves will be illegal
-        :param oppMoves: arr (list of move objects to be evaluated)
-        :return: bool (True if player is in check, False otherwise)
-        """
-        if self.whiteToMove:
-            for move in oppMoves:
-                if move.endRank == self.whiteKingCoords[0] and move.endFile == self.whiteKingCoords[1]:
-                    return True
-            return False
-        for move in oppMoves:
-            if move.endRank == self.blackKingCoords[0] and move.endFile == self.blackKingCoords[1]:
-                return True
-        return False
-
-    def moveIsCheck(self, move):
-        """
-        Determines if a single move is a check
-        :param move: Move Object
-        :return: True if move is a check, False otherwise
-        """
-        moves = []
-
-        piece = move.pieceMoved[:1]
-
-        if piece == "p":
-            self.getPawnMoves(move.endRank, move.endFile, moves)
-        elif piece == "k":
-            self.getKnightMoves(move.endRank, move.endFile, moves)
-        elif piece == "b":
-            self.getBishopMoves(move.endRank, move.endFile, moves)
-        elif piece == "r":
-            self.getRookMoves(move.endRank, move.endFile, moves)
-        elif piece == "q":
-            self.getQueenMoves(move.endRank, move.endFile, moves)
-        else:
-            moves = []
-
-        if self.check(moves):
-            return True
-        return False
-
     def findLegalMoves(self):
+        """
+        Returns legal moves in a position using above helper functions
+        :return: arr (legal moves)
+        """
         return self.generateMoves(self.findPieceLegalMoves())
 
     # --- Sliding Pieces --- #
     def getBishopMoves(self, rank, file, moves):
         """
         Need to check each direction, one square at a time, extending away from the piece, stopping when it hits a piece
+        :param rank: int (rank of the chessboard)
+        :param file: int (file on the chessboard)
+        :param moves: arr (list of move objects the player could make in isolation)
+        :return: None
         """
         diagonal_directions = [
             (-1, 1),  # Up and Right
@@ -250,6 +269,10 @@ class Engine:
     def getRookMoves(self, rank, file, moves):
         """
         Need to check each direction, one square at a time, extending away from the piece, stopping when it hits a piece
+        :param rank: int (rank of the chessboard)
+        :param file: int (file on the chessboard)
+        :param moves: arr (list of move objects the player could make in isolation)
+        :return: None
         """
         orthogonal_directions = [
             (-1, 0),  # Up
@@ -279,6 +302,10 @@ class Engine:
     def getQueenMoves(self, rank, file, moves):
         """
         Moves like a rook and a bishop, so let's just reuse those methods.
+        :param rank: int (rank of the chessboard)
+        :param file: int (file on the chessboard)
+        :param moves: arr (list of move objects the player could make in isolation)
+        :return: None
         """
         self.getBishopMoves(rank, file, moves)
         self.getRookMoves(rank, file, moves)
@@ -288,6 +315,10 @@ class Engine:
         """
         Get all of the possible pawn moves, based on the pawn at the inputted rank and file, and then add those moves
         to the moves list
+        :param rank: int (rank of the chessboard)
+        :param file: int (file on the chessboard)
+        :param moves: arr (list of move objects the player could make in isolation)
+        :return: None
         """
 
         # --- White Pawns --- #
@@ -330,6 +361,13 @@ class Engine:
                     moves.append(Move(rank, file, rank + 1, file - 1, self.virtualBoard))
 
     def getKnightMoves(self, rank, file, moves):
+        """
+        Finds all possible knight moves in the position.
+        :param rank: int (rank of the chessboard)
+        :param file: int (file on the chessboard)
+        :param moves: arr (list of move objects the player could make in isolation)
+        :return: None
+        """
         knight_moves = [
             (2, 1),
             (1, 2),
@@ -350,6 +388,13 @@ class Engine:
                     moves.append(Move(rank, file, end_rank, end_file, self.virtualBoard))
 
     def getKingMoves(self, rank, file, moves):
+        """
+        Finds all possible king moves for the position
+        :param rank: int (rank of the chessboard)
+        :param file: int (file on the chessboard)
+        :param moves: arr (list of move objects the player could make in isolation)
+        :return: None
+        """
         king_moves = [
             (1, 0),
             (1, 1),
@@ -372,7 +417,7 @@ class Engine:
 
     def updateKings(self, move):
         """
-        Add check logic here ??
+        Updates the position of the Kings whenever they are moved
         """
         if move.pieceMoved == "King_white":
             self.whiteKingCoords = (move.endRank, move.endFile)
@@ -380,6 +425,10 @@ class Engine:
             self.blackKingCoords = (move.endRank, move.endFile)
 
     def boardFromFEN(self):
+        """
+        Function to create a virtual board based on a Forsyth Edwards Notation (or FEN) string representation.
+        :return virtualBoard: arr (2D array representation of a chessboard)
+        """
         piecesFromFEN = {
             "K": "King_white",
             "k": "King_black",
@@ -473,7 +522,6 @@ class Move:
         except IndexError:
             print("Cannot move piece off of board.")
 
-
         # Special Moves
         self.pawnPromotion = False
         if (self.pieceMoved[-1] == "e" and self.pieceMoved[0] == "p" and self.endRank == 0) or \
@@ -487,7 +535,16 @@ class Move:
                 (self.pieceMoved[-1] == "k" and self.pieceMoved[0] == "p" and self.endRank - self.startRank == 2):
             self.twoSquareAdvance = True
 
-        # --- File Num to Letter for str --- #
+        # --- Piece/File/Rank Adjustment for Notation --- #
+        self.pieceCast = {
+            "0": "",
+            "p": "",
+            "k": "N",
+            "b": "B",
+            "r": "R",
+            "q": "Q",
+            "K": "K"
+        }
         self.intToLetter = {
             0: "a",
             1: "b",
@@ -512,6 +569,11 @@ class Move:
     def __str__(self):
         """
         Overloading string method
-        :return:
+        :return: str (string representation of a chess move)
         """
-        return f"{self.intToLetter[self.startFile]}{self.startRank}-{self.intToLetter[self.endFile]}{self.endRank}"
+        if self.pieceCaptured != "0":
+            if self.pieceMoved[0] == "p":
+                return f"{self.intToLetter[self.startFile]}x{self.intToLetter[self.endFile]}{8 - self.endRank}"
+            else:
+                return f"{self.pieceCast[self.pieceMoved[0]]}x{self.intToLetter[self.endFile]}{8 - self.endRank}"
+        return f"{self.pieceCast[self.pieceMoved[0]]}{self.intToLetter[self.endFile]}{8 - self.endRank}"

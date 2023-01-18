@@ -7,7 +7,7 @@ pygame.init()
 
 # --- Screen Variables --- #
 frame = False
-w, h = 960, 960
+w, h = 800, 800
 caption = "Chess"
 fps = 60
 
@@ -70,11 +70,11 @@ class Game:
         self.GAME_OVER = False
 
     def highlightLegalMoves(self, rank, file):
-        # Transparent Square
-        # surface = pygame.Surface((self.board.square_size, self.board.square_size))
-        # surface.set_alpha(100)  # Transparency value 0 --> High, 255 --> None
-        # surface.fill(Colour.GREY)
-        # screen.blit(surface, (file * self.board.square_size, rank * self.board.square_size))
+        """
+        Highlights legal moves for the currently held piece
+        :param rank, file: location of the piece on the board
+        :return: None
+        """
 
         pygame.draw.rect(screen, Colour.DARK_GREY, ((file * self.board.squareSize),
                                                     (rank * self.board.squareSize),
@@ -90,7 +90,7 @@ class Game:
                                         (move.endRank * self.board.squareSize + self.board.squareSize / 2)),
                                        self.board.squareSize / 6)
 
-                # --- It's a start for dealing with checks --- #
+                # --- Dealing with checks --- #
                 """
                 if self.engine.whiteToMove and (move.endRank, move.endFile) == self.engine.blackKingCoords:
                     surface = pygame.Surface((self.board.squareSize, self.board.squareSize))
@@ -130,7 +130,10 @@ class Game:
                                   move.endRank * self.board.squareSize))
 
     def run(self):
-        # --- Gameplay Loop --- #
+        """
+        Main gameplay loop
+        :return: None
+        """
         screen.fill(Colour.GREY)
 
         while self.running:
@@ -151,6 +154,7 @@ class Game:
                             self.engine.takeback()
                             self.moveMade = True
 
+                # --- Picking up a piece --- #
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mousePos = pygame.mouse.get_pos()
 
@@ -164,7 +168,7 @@ class Game:
                         # self.engine.virtualBoard[startRank][startFile] = "0"
                     else:
                         self.heldPiece = None
-
+                # --- Putting a piece down --- #
                 if event.type == pygame.MOUSEBUTTONUP:
                     if self.heldPiece:
                         self.holding = False
@@ -177,14 +181,17 @@ class Game:
                         if 0 <= endFile <= 7 and 0 <= endRank <= 7:
                             currentMove = Move(startRank, startFile, endRank, endFile, self.engine.virtualBoard)
 
-                            if self.whiteInCheck or self.blackInCheck:
-                                print(f"{self.fileTranslations[endFile]}{self.rankTranslations[endRank]}+")
-                            else:
-                                print(f"{self.fileTranslations[endFile]}{self.rankTranslations[endRank]}")
-
                             if currentMove in self.legalMoves:
                                 self.engine.makeMove(currentMove)
                                 self.moveMade = True
+
+                                if self.whiteInCheck or self.blackInCheck:
+                                    print(f"CHECK! {self.fileTranslations[endFile]}{self.rankTranslations[endRank]}+")
+                                else:
+                                    if not self.engine.whiteToMove:
+                                        print(f"{(len(self.engine.moveLog) + 1) // 2}. {currentMove}", end=", ")
+                                    else:
+                                        print(f"{currentMove}")
 
                         self.heldPiece = None
 
