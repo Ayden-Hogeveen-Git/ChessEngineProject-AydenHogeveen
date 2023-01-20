@@ -3,6 +3,9 @@
 ***
 TODO: Finish illegal move pruning and more advanced move generation.
 
+TODO: Update GUI and make notation, controls, and time more visible to the player
+- Start screen?
+
 
 ## Requirements
 Understand the problem and identify requirements that the program should fulfill
@@ -45,3 +48,6 @@ In a chess game:
 ***
 ### Window Icon
 <div>Icons made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+
+### Chess Pieces
+<div>Piece set from <a href="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Chess_Pieces_Sprite.svg/800px-Chess_Pieces_Sprite.svg.png" title="Wikimedia">www.wikimedia.org</a></div>
