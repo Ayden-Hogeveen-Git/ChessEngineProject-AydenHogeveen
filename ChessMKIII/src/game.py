@@ -1,6 +1,7 @@
 # game.py
 from board import Board, Colour
 from engine import Engine, Move
+from opponent import Opponent
 import pygame
 
 pygame.init()
@@ -67,6 +68,27 @@ class Game:
         self.whiteInCheck = False
         self.blackInCheck = False
 
+        self.opponent = Opponent()
+        # if self.whitePlayer and self.blackPlayer:
+        #     self.humanTurn = True
+        # elif self.whitePlayer and not self.blackPlayer:
+        #     self.humanTurn = self.engine.whiteToMove
+        # elif not self.whitePlayer and self.blackPlayer:
+        #     self.humanTurn = not self.engine.whiteToMove
+        # else:
+        #     self.humanTurn = False
+
+        # if self.whitePlayer:
+        #     self.humanTurn = self.engine.whiteToMove
+        #     self.opponent = Opponent("white")
+        # elif self.blackPlayer:
+        #     self.humanTurn = self.engine.whiteToMove
+        #     self.opponent = Opponent("black")
+        # else:
+        #     self.humanTurn = False
+        #     self.opponent = Opponent("black")
+
+        # self.humanTurn = (self.engine.whiteToMove and self.whitePlayer) or (not self.engine.whiteToMove and self.blackPlayer)
         self.GAME_OVER = False
 
     def highlightLegalMoves(self, rank, file):
@@ -139,6 +161,8 @@ class Game:
         while self.running:
             self.board.drawGame(self.engine.virtualBoard)
 
+            humanTurn = (self.engine.whiteToMove and self.whitePlayer) or (not self.engine.whiteToMove and self.blackPlayer)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -155,45 +179,54 @@ class Game:
                             self.moveMade = True
 
                 # --- Picking up a piece --- #
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    mousePos = pygame.mouse.get_pos()
-
-                    startRank = mousePos[1] // self.board.squareSize
-                    startFile = mousePos[0] // self.board.squareSize
-
-                    if 0 <= startFile <= 7 and 0 <= startRank <= 7:
-                        self.holding = True
-
-                        self.heldPiece = self.engine.virtualBoard[startRank][startFile]
-                        # self.engine.virtualBoard[startRank][startFile] = "0"
-                    else:
-                        self.heldPiece = None
-                # --- Putting a piece down --- #
-                if event.type == pygame.MOUSEBUTTONUP:
-                    if self.heldPiece:
-                        self.holding = False
-
+                if humanTurn:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
                         mousePos = pygame.mouse.get_pos()
 
-                        endRank = mousePos[1] // self.board.squareSize
-                        endFile = mousePos[0] // self.board.squareSize
+                        startRank = mousePos[1] // self.board.squareSize
+                        startFile = mousePos[0] // self.board.squareSize
 
-                        if 0 <= endFile <= 7 and 0 <= endRank <= 7:
-                            currentMove = Move(startRank, startFile, endRank, endFile, self.engine.virtualBoard)
+                        if 0 <= startFile <= 7 and 0 <= startRank <= 7:
+                            self.holding = True
 
-                            if currentMove in self.legalMoves:
-                                self.engine.makeMove(currentMove)
-                                self.moveMade = True
+                            self.heldPiece = self.engine.virtualBoard[startRank][startFile]
+                            # self.engine.virtualBoard[startRank][startFile] = "0"
+                        else:
+                            self.heldPiece = None
+                    # --- Putting a piece down --- #
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        if self.heldPiece:
+                            self.holding = False
 
-                                if self.whiteInCheck or self.blackInCheck:
-                                    print(f"CHECK! {self.fileTranslations[endFile]}{self.rankTranslations[endRank]}+")
-                                else:
-                                    if not self.engine.whiteToMove:
-                                        print(f"{(len(self.engine.moveLog) + 1) // 2}. {currentMove}", end=", ")
+                            mousePos = pygame.mouse.get_pos()
+
+                            endRank = mousePos[1] // self.board.squareSize
+                            endFile = mousePos[0] // self.board.squareSize
+
+                            if 0 <= endFile <= 7 and 0 <= endRank <= 7:
+                                currentMove = Move(startRank, startFile, endRank, endFile, self.engine.virtualBoard)
+
+                                if currentMove in self.legalMoves:
+                                    self.engine.makeMove(currentMove)
+                                    self.moveMade = True
+
+                                    if self.whiteInCheck or self.blackInCheck:
+                                        print(f"CHECK! {self.fileTranslations[endFile]}{self.rankTranslations[endRank]}+")
                                     else:
-                                        print(f"{currentMove}")
+                                        if not self.engine.whiteToMove:
+                                            print(f"{(len(self.engine.moveLog) + 1) // 2}. {currentMove}", end=", ")
+                                        else:
+                                            print(f"{currentMove}")
 
-                        self.heldPiece = None
+                            self.heldPiece = None
+
+                else:
+                    computerMove = self.opponent.getMove(self.legalMoves)
+                    if computerMove:
+                        self.engine.makeMove(computerMove)
+                        self.moveMade = True
+                    else:
+                        print("checkmate")
 
             if self.holding and self.heldPiece != "0":
                 mousePos = pygame.mouse.get_pos()
