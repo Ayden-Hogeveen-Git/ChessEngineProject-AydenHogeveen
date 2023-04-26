@@ -1,10 +1,9 @@
 # engine.py
 class Engine:
     """
-    To Do:
-    fix issues with king position, we're losing the kings every once in a while
-    - might be issues with notation
-    - white/black king pos being opposite
+    TODO: Castling
+    TODO: Checkmate
+    TODO: En Passant
 
     Saved FEN positions
     - start position: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -73,6 +72,9 @@ class Engine:
 
             # King Moves
             self.updateKings(move)
+            
+            print(self.whiteKingCoords)
+            print(self.blackKingCoords)
 
     def takeback(self):
         """
@@ -128,12 +130,12 @@ class Engine:
         :return: bool (True if player is in check, False otherwise)
         """
         if self.whiteToMove:
-            for move in oppMoves:
-                if move.endRank == self.whiteKingCoords[0] and move.endFile == self.whiteKingCoords[1]:
-                    return True
-            return False
+            kingCoords = self.whiteKingCoords
+        else:
+            kingCoords = self.blackKingCoords
+
         for move in oppMoves:
-            if move.endRank == self.blackKingCoords[0] and move.endFile == self.blackKingCoords[1]:
+            if move.endRank == kingCoords[0] and move.endFile == kingCoords[1]:
                 return True
         return False
 

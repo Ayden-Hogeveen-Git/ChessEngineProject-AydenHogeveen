@@ -7,14 +7,15 @@ import pygame
 pygame.init()
 
 # --- Screen Variables --- #
-frame = False
+frame = True
 w, h = 800, 800
 caption = "Chess"
 fps = 60
 
-bW, bH = w + 100, h + 100
-background = pygame.display.set_mode((bW, bH), pygame.NOFRAME)
-screen = pygame.display.set_mode((w, h), pygame.NOFRAME)
+if frame:
+    screen = pygame.display.set_mode((w, h))
+else:
+    screen = pygame.display.set_mode((w, h), pygame.NOFRAME)
 
 pygame.display.set_caption(caption)
 pygame.display.set_icon(pygame.image.load("assets/CHESSICON.png"))
@@ -49,7 +50,7 @@ class Game:
             6: 2,
             7: 1
         }
-        self.pieceOffset = w // 16
+        self.pieceOffset = w // (w // 50)
 
         # --- Player --- #
         self.holding = False
@@ -65,6 +66,7 @@ class Game:
         # --- Game Conditions --- #
         self.whitePlayer = True
         self.blackPlayer = False
+
         self.whiteInCheck = False
         self.blackInCheck = False
 
