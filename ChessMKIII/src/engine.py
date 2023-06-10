@@ -72,9 +72,6 @@ class Engine:
 
             # King Moves
             self.updateKings(move)
-            
-            print(self.whiteKingCoords)
-            print(self.blackKingCoords)
 
     def takeback(self):
         """
@@ -123,109 +120,52 @@ class Engine:
 
         return legalMoves
 
-    def check(self, oppMoves):
-        """
-        Determines if possible moves will be illegal
-        :param oppMoves: arr (list of move objects to be evaluated)
-        :return: bool (True if player is in check, False otherwise)
-        """
-        if self.whiteToMove:
-            kingCoords = self.whiteKingCoords
-        else:
-            kingCoords = self.blackKingCoords
-
-        for move in oppMoves:
-            if move.endRank == kingCoords[0] and move.endFile == kingCoords[1]:
-                return True
-        return False
-
-    def moveIsCheck(self, move):
-        """
-        Determines if a single move is a check
-        :param move: Move Object
-        :return: True if move is a check, False otherwise
-        """
-        moves = []
-
-        piece = move.pieceMoved[:1]
-
-        if piece == "p":
-            self.getPawnMoves(move.endRank, move.endFile, moves)
-        elif piece == "k":
-            self.getKnightMoves(move.endRank, move.endFile, moves)
-        elif piece == "b":
-            self.getBishopMoves(move.endRank, move.endFile, moves)
-        elif piece == "r":
-            self.getRookMoves(move.endRank, move.endFile, moves)
-        elif piece == "q":
-            self.getQueenMoves(move.endRank, move.endFile, moves)
-        else:
-            moves = []
-
-        if self.check(moves):
-            return True
-        return False
-
     def generateMoves(self, psuedoLegal):
         """
         Removes illegal moves from the list of possible piece moves in the current position
+        1. Makes the move
+        2. Checks if the king is in check
+        3. If the king is in check, the move is illegal, don't add it to the list
+            else: add to legal moves
+        4. Check next move
         :param psuedoLegal: arr (list of moves a player could make with the pieces, before accounting for the rules)
         :return legal: arr (list of moves a player can make in the position)
         """
         legal = []
-        """
-        Basic legal moves:
-        1. Generate all possible legal moves
-        2. Make each move
-        3. Generate all of opponents moves
-        4. If any of those moves take the king: prune the move
-        """
 
-        """
-        Check logic
-        We have each kings coordinates, if those coordinates are a valid move for the other team, the king is
-        in check and must do something about it.
-        
-        check each of the opponent's next legal moves to see they could take the king
-        
-        1. switch to opponent's turn
-            2. generateMoves and store in a variable
-            3. if any of those moves could take the king, then it is a check, otherwise false
-        """
-        # castling goes here
-
-        # --- Pruning Illegal Moves --- #
         for move in psuedoLegal:
             self.makeMove(move)
-            oppMoves = self.findPieceLegalMoves()
-
-            self.whiteToMove = not self.whiteToMove
-
-            if not self.check(oppMoves):
+            if not self.inCheck():
                 legal.append(move)
-
-            self.whiteToMove = not self.whiteToMove
             self.takeback()
-
-        # --- Game Ends by Checkmate or Stalemate --- #
-        if len(legal) == 0:
-            self.whiteToMove = not self.whiteToMove
-            oppMoves = self.findPieceLegalMoves()
-            self.whiteToMove = not self.whiteToMove
-
-            if self.check(oppMoves):
-                print("checkmate")
-            else:
-                print("stalemate")
-
-        # --- En Passant Here --- #
-
-        # Had this line before, now it breaks something, hopefully, deleting it won't break something
-        # if len(self.moveLog) > 0:
-        #     if self.moveLog[-1].twoSquareAdvance and self.whiteToMove:
-        #         pass
-
+        
         return legal
+
+    def inCheck(self):
+        """
+        Determines if the king is in check in the current position
+        :return: bool (True if king is in check, False otherwise)
+        """
+        if self.whiteToMove:
+            return self.squareUnderAttack(self.whiteKingCoords[0], self.whiteKingCoords[1])
+        else:
+            return self.squareUnderAttack(self.blackKingCoords[0], self.blackKingCoords[1])
+    
+    def squareUnderAttack(self, rank, file):
+        """
+        Determines if a particular square is under attack
+        :param rank: int (rank of the square)
+        :param file: int (file of the square)
+        :return: bool (True if square is under attack, False otherwise)
+        """
+        self.whiteToMove = not self.whiteToMove  # Switch to opponent's turn
+        opponentMoves = self.findPieceLegalMoves()  # Find opponent's legal moves
+        self.whiteToMove = not self.whiteToMove  # Switch back to original player's turn
+
+        for move in opponentMoves:
+            if move.endRank == rank and move.endFile == file:
+                return True
+        return False
 
     def findLegalMoves(self):
         """
@@ -419,12 +359,14 @@ class Engine:
 
     def updateKings(self, move):
         """
-        Updates the position of the Kings whenever they are moved
+        Updates the position of the Kings every move (inefficient, but it works)
         """
-        if move.pieceMoved == "King_white":
-            self.whiteKingCoords = (move.endRank, move.endFile)
-        if move.pieceMoved == "King_black":
-            self.blackKingCoords = (move.endRank, move.endFile)
+        for rank in range(8):
+            for file in range(8):
+                if self.virtualBoard[rank][file] == "King_white":
+                    self.whiteKingCoords = (rank, file)
+                if self.virtualBoard[rank][file] == "King_black":
+                    self.blackKingCoords = (rank, file)
 
     def boardFromFEN(self):
         """

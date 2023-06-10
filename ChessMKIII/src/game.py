@@ -27,6 +27,7 @@ clock = pygame.time.Clock()
 class Game:
     def __init__(self):
         self.running = True
+        self.singlePlayer = False
 
         # --- ChessBoard --- #
         self.board = Board(screen)
@@ -133,25 +134,23 @@ class Game:
 
     def highlightChecks(self, move):
         """
-        Highlights the attacked king if a move is a check
+        Right now just highlights the kings
+        TODO: add checks
         :param move: Move Object
         :return: None
         """
-        if self.engine.moveIsCheck(move):
-            if self.engine.whiteToMove:
-                surface = pygame.Surface((self.board.squareSize, self.board.squareSize))
-                surface.set_alpha(100)  # Transparency value 0 --> High, 255 --> None
-                surface.fill(Colour.HIGHLIGHT_CHECK)
-                screen.blit(surface, (self.engine.blackKingCoords[1] * self.board.squareSize,
-                                      self.engine.blackKingCoords[0] * self.board.squareSize))
-            else:
-                surface = pygame.Surface((self.board.squareSize, self.board.squareSize))
-                surface.set_alpha(100)  # Transparency value 0 --> High, 255 --> None
-                surface.fill(Colour.HIGHLIGHT_CHECK)
-                screen.blit(surface, (self.engine.whiteKingCoords[1] * self.board.squareSize,
-                                      self.engine.whiteKingCoords[0] * self.board.squareSize))
-            screen.blit(surface, (move.endFile * self.board.squareSize,
-                                  move.endRank * self.board.squareSize))
+
+        surface = pygame.Surface((self.board.squareSize, self.board.squareSize))
+        surface.set_alpha(100)  # Transparency value 0 --> High, 255 --> None
+        surface.fill(Colour.HIGHLIGHT_CHECK)
+        screen.blit(surface, (self.engine.blackKingCoords[1] * self.board.squareSize,
+                                self.engine.blackKingCoords[0] * self.board.squareSize))
+        
+        surface = pygame.Surface((self.board.squareSize, self.board.squareSize))
+        surface.set_alpha(100)  # Transparency value 0 --> High, 255 --> None
+        surface.fill(Colour.HIGHLIGHT_CHECK)
+        screen.blit(surface, (self.engine.whiteKingCoords[1] * self.board.squareSize,
+                                self.engine.whiteKingCoords[0] * self.board.squareSize))
 
     def run(self):
         """
@@ -163,8 +162,11 @@ class Game:
         while self.running:
             self.board.drawGame(self.engine.virtualBoard)
 
-            humanTurn = (self.engine.whiteToMove and self.whitePlayer) or (not self.engine.whiteToMove and self.blackPlayer)
-
+            if self.singlePlayer:
+                humanTurn = (self.engine.whiteToMove and self.whitePlayer) or (not self.engine.whiteToMove and self.blackPlayer)
+            else:
+                humanTurn = True
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
