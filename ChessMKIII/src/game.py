@@ -27,7 +27,7 @@ clock = pygame.time.Clock()
 class Game:
     def __init__(self):
         self.running = True
-        self.singlePlayer = False
+        self.singlePlayer = True
 
         # --- ChessBoard --- #
         self.board = Board(screen)
