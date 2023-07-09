@@ -48,9 +48,6 @@ class Board:
         # Images
         self.images = {}
 
-        # Gamestate
-        self.gamestate = []
-
     def createBoard(self):
         """
         Creates and Draws the 64 squares
@@ -71,7 +68,7 @@ class Board:
         pieces = ["pawn_white", "rook_white", "knight_white", "bishop_white", "queen_white", "King_white",
                   "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "King_black"]
         for piece in pieces:
-            self.images[piece] = pygame.transform.scale(pygame.image.load("assets/ChessPieces/" + piece + ".png"),
+            self.images[piece] = pygame.transform.scale(pygame.image.load("src/assets/ChessPieces/" + piece + ".png"),
                                                         (self.squareSize, self.squareSize))
 
     def drawPieces(self, virtual_board):
@@ -83,7 +80,7 @@ class Board:
         for rank in range(self.dimension):
             for file in range(self.dimension):
                 piece = virtual_board[file][rank]
-                if piece != "0":
+                if (piece != "0"):
                     self.screen.blit(self.images[piece], pygame.Rect(rank * self.squareSize, file * self.squareSize,
                                                                      self.squareSize, self.squareSize))
 
@@ -100,5 +97,5 @@ class Board:
                   "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "King_black"]
         for piece in pieces:
             self.images[piece] = pygame.transform.scale(
-                pygame.image.load("assets/ChessPieces/" + piece + ".png"),
+                pygame.image.load("src/assets/ChessPieces/" + piece + ".png"),
                 (self.squareSize, self.squareSize))

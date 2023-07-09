@@ -11,7 +11,7 @@ class Engine:
     """
     def __init__(self):
         # --- Board Representation --- #
-        self.fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        self.fenString = "8/8/8/8/5R2/2pk4/5K2/8 w - - 0 1"
 
         # --- Turns --- #
         self.whiteToMove = True
@@ -147,9 +147,9 @@ class Engine:
         :return: bool (True if king is in check, False otherwise)
         """
         if self.whiteToMove:
-            return self.squareUnderAttack(self.whiteKingCoords[0], self.whiteKingCoords[1])
-        else:
             return self.squareUnderAttack(self.blackKingCoords[0], self.blackKingCoords[1])
+        else:
+            return self.squareUnderAttack(self.whiteKingCoords[0], self.whiteKingCoords[1])
     
     def squareUnderAttack(self, rank, file):
         """
@@ -400,17 +400,17 @@ class Engine:
         for i in range(8):
             rank = []
             for char in tempRank[i]:
-                if char == " ":
+                if (char == " "):
                     break
-                elif char.isdigit():
+                elif (char.isdigit()):
                     rank += ["0"] * int(char)
                 else:
                     rank.append(piecesFromFEN[char])
 
                 # Find Kings
-                if char == "K":
+                if (char == "K"):
                     self.whiteKingCoords = (i, len(rank) - 1)
-                if char == "k":
+                if (char == "k"):
                     self.blackKingCoords = (i, len(rank) - 1)
 
             virtualBoard.append(rank)
@@ -419,14 +419,14 @@ class Engine:
         gameState = tempRank[-1].split(" ")
 
         # Turns
-        if gameState[1] == "w":
+        if (gameState[1] == "w"):
             self.whiteToMove = True
         else:
             self.whiteToMove = False
 
         # Castling
         castlingRights = gameState[2]
-        if castlingRights != "-":
+        if (castlingRights != "-"):
             if "K" in castlingRights:
                 self.whiteCastling["kingside"] = True
             if "Q" in castlingRights:
@@ -440,7 +440,7 @@ class Engine:
 
         # En Passant
         enPassant = gameState[3]
-        if enPassant != "-":
+        if (enPassant != "-"):
             self.enPassantPossible = True
             self.enPassantCoords = enPassant
         else:

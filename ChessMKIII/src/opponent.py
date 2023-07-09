@@ -17,6 +17,6 @@ class Opponent:
         :return move: move object (computer's move, False if no legal moves found)
         """
         n = len(legal) - 1
-        if n > 0:
+        if (n > 0):
             return legal[random.randint(0, len(legal) - 1)]
         return False

@@ -18,7 +18,7 @@ else:
     screen = pygame.display.set_mode((w, h), pygame.NOFRAME)
 
 pygame.display.set_caption(caption)
-pygame.display.set_icon(pygame.image.load("assets/CHESSICON.png"))
+pygame.display.set_icon(pygame.image.load("src/assets/CHESSICON.png"))
 
 clock = pygame.time.Clock()
 
@@ -72,27 +72,6 @@ class Game:
         self.blackInCheck = False
 
         self.opponent = Opponent()
-        # if self.whitePlayer and self.blackPlayer:
-        #     self.humanTurn = True
-        # elif self.whitePlayer and not self.blackPlayer:
-        #     self.humanTurn = self.engine.whiteToMove
-        # elif not self.whitePlayer and self.blackPlayer:
-        #     self.humanTurn = not self.engine.whiteToMove
-        # else:
-        #     self.humanTurn = False
-
-        # if self.whitePlayer:
-        #     self.humanTurn = self.engine.whiteToMove
-        #     self.opponent = Opponent("white")
-        # elif self.blackPlayer:
-        #     self.humanTurn = self.engine.whiteToMove
-        #     self.opponent = Opponent("black")
-        # else:
-        #     self.humanTurn = False
-        #     self.opponent = Opponent("black")
-
-        # self.humanTurn = (self.engine.whiteToMove and self.whitePlayer) or (not self.engine.whiteToMove and self.blackPlayer)
-        self.GAME_OVER = False
 
     def highlightLegalMoves(self, rank, file):
         """
@@ -100,7 +79,6 @@ class Game:
         :param rank, file: location of the piece on the board
         :return: None
         """
-
         pygame.draw.rect(screen, Colour.DARK_GREY, ((file * self.board.squareSize),
                                                     (rank * self.board.squareSize),
                                                     self.board.squareSize, self.board.squareSize), w // 256)
@@ -114,23 +92,6 @@ class Game:
                                        ((move.endFile * self.board.squareSize + self.board.squareSize / 2),
                                         (move.endRank * self.board.squareSize + self.board.squareSize / 2)),
                                        self.board.squareSize / 6)
-
-                # --- Dealing with checks --- #
-                """
-                if self.engine.whiteToMove and (move.endRank, move.endFile) == self.engine.blackKingCoords:
-                    surface = pygame.Surface((self.board.squareSize, self.board.squareSize))
-                    surface.set_alpha(100)  # Transparency value 0 --> High, 255 --> None
-                    surface.fill(Colour.HIGHLIGHT_CHECK)
-                    screen.blit(surface, (self.engine.blackKingCoords[1] * self.board.squareSize,
-                                          self.engine.blackKingCoords[0] * self.board.squareSize))
-
-                if not self.engine.whiteToMove and (move.endRank, move.endFile) == self.engine.whiteKingCoords:
-                    surface = pygame.Surface((self.board.squareSize, self.board.squareSize))
-                    surface.set_alpha(100)  # Transparency value 0 --> High, 255 --> None
-                    surface.fill(Colour.HIGHLIGHT_CHECK)
-                    screen.blit(surface, (self.engine.whiteKingCoords[1] * self.board.squareSize,
-                                          self.engine.whiteKingCoords[0] * self.board.squareSize))
-                """
 
     def highlightChecks(self, move):
         """
@@ -152,39 +113,58 @@ class Game:
         screen.blit(surface, (self.engine.whiteKingCoords[1] * self.board.squareSize,
                                 self.engine.whiteKingCoords[0] * self.board.squareSize))
 
+    def draw(self, startRank, startFile):
+        """
+        Draws the board
+        :return: None
+        """
+        self.board.drawGame(self.engine.virtualBoard)
+
+        if (self.holding and self.heldPiece != "0"):
+                mousePos = pygame.mouse.get_pos()
+                screen.blit(self.board.images[self.heldPiece], pygame.Rect(mousePos[0] - self.pieceOffset,
+                                                                           mousePos[1] - self.pieceOffset,
+                                                                           self.board.squareSize,
+                                                                           self.board.squareSize))
+                self.highlightLegalMoves(startRank, startFile)
+                if (self.engine.moveLog):
+                    self.highlightChecks(self.engine.moveLog[-1])
+
+        pygame.display.update()
+        clock.tick(fps)
+
     def run(self):
         """
         Main gameplay loop
         :return: None
         """
-        screen.fill(Colour.GREY)
+        startRank = startFile = -1
 
-        while self.running:
-            self.board.drawGame(self.engine.virtualBoard)
+        while (self.running):
+            self.draw(startRank, startFile)
+                        
+            humanTurn = (self.engine.whiteToMove and self.whitePlayer) or (not self.engine.whiteToMove and self.blackPlayer) if (self.singlePlayer) else True
 
-            if self.singlePlayer:
-                humanTurn = (self.engine.whiteToMove and self.whitePlayer) or (not self.engine.whiteToMove and self.blackPlayer)
-            else:
-                humanTurn = True
-            
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if (event.type == pygame.QUIT):
                     self.running = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
+                if (event.type == pygame.KEYDOWN):
+                    # --- Key Events --- #
+                    if (event.key == pygame.K_ESCAPE):
                         self.running = False
 
-                    if event.key == pygame.K_LEFT:
+                    if (event.key == pygame.K_LEFT):
                         self.engine.takeback()
                         self.moveMade = True
-                    if event.key == pygame.K_r:
+
+                    if (event.key == pygame.K_r):
                         for i in range(len(self.engine.moveLog)):
                             self.engine.takeback()
                             self.moveMade = True
 
-                # --- Picking up a piece --- #
-                if humanTurn:
-                    if event.type == pygame.MOUSEBUTTONDOWN:
+                # --- Piece Movement --- #
+                if (humanTurn):
+                    if (event.type == pygame.MOUSEBUTTONDOWN):
                         mousePos = pygame.mouse.get_pos()
 
                         startRank = mousePos[1] // self.board.squareSize
@@ -198,8 +178,8 @@ class Game:
                         else:
                             self.heldPiece = None
                     # --- Putting a piece down --- #
-                    if event.type == pygame.MOUSEBUTTONUP:
-                        if self.heldPiece:
+                    if (event.type == pygame.MOUSEBUTTONUP):
+                        if (self.heldPiece):
                             self.holding = False
 
                             mousePos = pygame.mouse.get_pos()
@@ -226,27 +206,16 @@ class Game:
 
                 else:
                     computerMove = self.opponent.getMove(self.legalMoves)
-                    if computerMove:
+                    if (computerMove):
                         self.engine.makeMove(computerMove)
                         self.moveMade = True
                     else:
                         print("checkmate")
 
-            if self.holding and self.heldPiece != "0":
-                mousePos = pygame.mouse.get_pos()
-                screen.blit(self.board.images[self.heldPiece], pygame.Rect(mousePos[0] - self.pieceOffset,
-                                                                           mousePos[1] - self.pieceOffset,
-                                                                           self.board.squareSize,
-                                                                           self.board.squareSize))
-                self.highlightLegalMoves(startRank, startFile)
-                if self.engine.moveLog:
-                    self.highlightChecks(self.engine.moveLog[-1])
-
-            if self.moveMade:
+            if (self.moveMade):
                 # Check for legal moves
                 self.legalMoves = self.engine.findLegalMoves()
                 self.moveMade = False
+                print(f"White\nCoords: {self.engine.whiteKingCoords}\nBlack\nCoords: {self.engine.blackKingCoords}\n")
 
-            pygame.display.update()
         pygame.quit()
-        clock.tick(fps)
