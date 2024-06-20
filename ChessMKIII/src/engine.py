@@ -11,7 +11,7 @@ class Engine:
     """
     def __init__(self):
         # --- Board Representation --- #
-        self.fenString = "8/8/8/8/5R2/2pk4/5K2/8 w - - 0 1"
+        self.fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
         # --- Turns --- #
         self.whiteToMove = True

@@ -68,7 +68,7 @@ class Board:
         pieces = ["pawn_white", "rook_white", "knight_white", "bishop_white", "queen_white", "King_white",
                   "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "King_black"]
         for piece in pieces:
-            self.images[piece] = pygame.transform.scale(pygame.image.load("src/assets/ChessPieces/" + piece + ".png"),
+            self.images[piece] = pygame.transform.scale(pygame.image.load("ChessMKIII/src/assets/ChessPieces/" + piece + ".png"),
                                                         (self.squareSize, self.squareSize))
 
     def drawPieces(self, virtual_board):
@@ -97,5 +97,5 @@ class Board:
                   "pawn_black", "rook_black", "knight_black", "bishop_black", "queen_black", "King_black"]
         for piece in pieces:
             self.images[piece] = pygame.transform.scale(
-                pygame.image.load("src/assets/ChessPieces/" + piece + ".png"),
+                pygame.image.load("ChessMKIII/src/assets/ChessPieces/" + piece + ".png"),
                 (self.squareSize, self.squareSize))

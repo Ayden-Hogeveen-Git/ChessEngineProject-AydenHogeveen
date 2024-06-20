@@ -18,7 +18,7 @@ else:
     screen = pygame.display.set_mode((w, h), pygame.NOFRAME)
 
 pygame.display.set_caption(caption)
-pygame.display.set_icon(pygame.image.load("src/assets/CHESSICON.png"))
+pygame.display.set_icon(pygame.image.load("ChessMKIII/src/assets/CHESSICON.png"))
 
 clock = pygame.time.Clock()
 
