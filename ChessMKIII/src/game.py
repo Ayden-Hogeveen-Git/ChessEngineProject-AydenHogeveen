@@ -85,9 +85,9 @@ class Game:
 
         # Circles
         # Highlight Moves
-        if self.legalMoves:
+        if (self.legalMoves):
             for move in self.legalMoves:
-                if move.startFile == file and move.startRank == rank:
+                if (move.startFile == file and move.startRank == rank):
                     pygame.draw.circle(screen, Colour.HIGHLIGHT_COLOUR,
                                        ((move.endFile * self.board.squareSize + self.board.squareSize / 2),
                                         (move.endRank * self.board.squareSize + self.board.squareSize / 2)),
@@ -170,13 +170,14 @@ class Game:
                         startRank = mousePos[1] // self.board.squareSize
                         startFile = mousePos[0] // self.board.squareSize
 
-                        if 0 <= startFile <= 7 and 0 <= startRank <= 7:
+                        if (0 <= startFile <= 7 and 0 <= startRank <= 7):
                             self.holding = True
 
                             self.heldPiece = self.engine.virtualBoard[startRank][startFile]
                             # self.engine.virtualBoard[startRank][startFile] = "0"
                         else:
                             self.heldPiece = None
+
                     # --- Putting a piece down --- #
                     if (event.type == pygame.MOUSEBUTTONUP):
                         if (self.heldPiece):
@@ -187,17 +188,17 @@ class Game:
                             endRank = mousePos[1] // self.board.squareSize
                             endFile = mousePos[0] // self.board.squareSize
 
-                            if 0 <= endFile <= 7 and 0 <= endRank <= 7:
+                            if (0 <= endFile <= 7 and 0 <= endRank <= 7):
                                 currentMove = Move(startRank, startFile, endRank, endFile, self.engine.virtualBoard)
 
-                                if currentMove in self.legalMoves:
+                                if (currentMove in self.legalMoves):
                                     self.engine.makeMove(currentMove)
                                     self.moveMade = True
 
-                                    if self.whiteInCheck or self.blackInCheck:
+                                    if (self.whiteInCheck or self.blackInCheck):
                                         print(f"CHECK! {self.fileTranslations[endFile]}{self.rankTranslations[endRank]}+")
                                     else:
-                                        if not self.engine.whiteToMove:
+                                        if (not self.engine.whiteToMove):
                                             print(f"{(len(self.engine.moveLog) + 1) // 2}. {currentMove}", end=", ")
                                         else:
                                             print(f"{currentMove}")
@@ -216,6 +217,7 @@ class Game:
                 # Check for legal moves
                 self.legalMoves = self.engine.findLegalMoves()
                 self.moveMade = False
-                print(f"White\nCoords: {self.engine.whiteKingCoords}\nBlack\nCoords: {self.engine.blackKingCoords}\n")
+                # print(f"White\nCoords: {self.engine.whiteKingCoords}\nBlack\nCoords: {self.engine.blackKingCoords}\n")
+                # print(f"W: {self.engine.whiteCastling} B: {self.engine.blackCastling}\n")
 
         pygame.quit()

@@ -43,35 +43,45 @@ class Engine:
 
     def makeMove(self, move):
         """
-        Takes a move object as a parameter and makes that move on the virtual board, updating it to match the
-        user board representation
-        :param move: move object (move to be made)
+        Makes a move on the board, updating the board state accordingly
+        :param move: Move (move object to make)
         :return: None
         """
-        if move.startRank == move.endRank and move.startFile == move.endFile:
-            pass
-        else:
+        if (move.startRank != move.endRank or move.startFile != move.endFile):
             # Basic Move Making
             self.virtualBoard[move.startRank][move.startFile] = "0"
             self.virtualBoard[move.endRank][move.endFile] = move.pieceMoved
             self.moveLog.append(move)
 
+            # Handle castling
+            if (move.isCastle):
+                if (move.endFile == 6):  # Kingside castling
+                    self.virtualBoard[move.endRank][5] = self.virtualBoard[move.endRank][7]
+                    self.virtualBoard[move.endRank][7] = "0"
+                else:  # Queenside castling
+                    self.virtualBoard[move.endRank][3] = self.virtualBoard[move.endRank][0]
+                    self.virtualBoard[move.endRank][0] = "0"
+
             # Switch Turns
             self.whiteToMove = not self.whiteToMove
 
             # Pawn Promotion
-            if move.pawnPromotion:
-                if self.whiteToMove:
+            if (move.pawnPromotion):
+                if (self.whiteToMove):
                     self.virtualBoard[move.endRank][move.endFile] = "queen_black"
                 else:
                     self.virtualBoard[move.endRank][move.endFile] = "queen_white"
 
             # En Passant
-            if move.enPassant:
+            if (move.enPassant):
                 print("possible en passant")
 
             # King Moves
             self.updateKings(move)
+
+            # Update castling rights
+            self.updateCastlingRights(move)
+
 
     def takeback(self):
         """
@@ -135,7 +145,7 @@ class Engine:
 
         for move in psuedoLegal:
             self.makeMove(move)
-            if not self.inCheck():
+            if (not self.inCheck()):
                 legal.append(move)
             self.takeback()
         
@@ -351,11 +361,25 @@ class Engine:
             endRank = rank + move[0]
             endFile = file + move[1]
 
-            if 0 <= endRank <= 7 and 0 <= endFile <= 7:  # If the King stays on the board
+            if (0 <= endRank <= 7 and 0 <= endFile <= 7):  # If the King stays on the board
                 end_piece = self.virtualBoard[endRank][endFile]
 
-                if end_piece[-1] != self.player:  # Not the same colour piece
+                if (end_piece[-1] != self.player):  # Not the same colour piece
                     moves.append(Move(rank, file, endRank, endFile, self.virtualBoard))
+
+        # Castling
+        if (self.whiteToMove):
+            if (self.whiteCastling["kingside"] and self.virtualBoard[7][5] == "0" and self.virtualBoard[7][6] == "0" and not self.squareUnderAttack(7, 4) and not self.squareUnderAttack(7, 5) and not self.squareUnderAttack(7, 6)):
+                moves.append(Move(rank, file, 7, 6, self.virtualBoard, isCastle=True))
+            if (self.whiteCastling["queenside"] and self.virtualBoard[7][1] == "0" and self.virtualBoard[7][2] == "0" and self.virtualBoard[7][3] == "0" and not self.squareUnderAttack(7, 4) and not self.squareUnderAttack(7, 2) and not self.squareUnderAttack(7, 3)):
+                moves.append(Move(rank, file, 7, 2, self.virtualBoard, isCastle=True))
+        else:
+            if (self.blackCastling["kingside"] and self.virtualBoard[0][5] == "0" and self.virtualBoard[0][6] == "0" and not self.squareUnderAttack(0, 4) and not self.squareUnderAttack(0, 5) and not self.squareUnderAttack(0, 6)):
+                moves.append(Move(rank, file, 0, 6, self.virtualBoard, isCastle=True))
+            if (self.blackCastling["queenside"] and self.virtualBoard[0][1] == "0" and self.virtualBoard[0][2] == "0" and self.virtualBoard[0][3] == "0" and not self.squareUnderAttack(0, 4) and not self.squareUnderAttack(0, 2) and not self.squareUnderAttack(0, 3)):
+                moves.append(Move(rank, file, 0, 2, self.virtualBoard, isCastle=True))
+        
+
 
     def updateKings(self, move):
         """
@@ -367,6 +391,43 @@ class Engine:
                     self.whiteKingCoords = (rank, file)
                 if self.virtualBoard[rank][file] == "King_black":
                     self.blackKingCoords = (rank, file)
+
+    def updateCastlingRights(self, move):
+        """
+        Method to track the castling rights of each player, specifically the movement of the Kings and Rooks
+        :param move: Move (move object to make)
+        :return: None
+        """
+        if (move.pieceMoved == "King_white"):
+            self.whiteCastling["kingside"] = False
+            self.whiteCastling["queenside"] = False
+            print("1")
+        elif (move.pieceMoved == "King_black"):
+            self.blackCastling["kingside"] = False
+            self.blackCastling["queenside"] = False
+            print("2")
+
+        elif move.pieceMoved == "rook_white":
+            if (move.startRank == 7):
+                if (move.startFile == 0):
+                    self.whiteCastling["queenside"] = False
+                    print("3")
+
+                elif (move.startFile == 7):
+                    self.whiteCastling["kingside"] = False
+                    print("4")
+
+        elif (move.pieceMoved == "rook_black"):
+            if (move.startRank == 0):
+                if (move.startFile == 0):
+                    self.blackCastling["queenside"] = False
+                    print("5")
+
+                elif (move.startFile == 7):
+                    self.blackCastling["kingside"] = False
+                    print("6")
+
+
 
     def boardFromFEN(self):
         """
@@ -427,13 +488,13 @@ class Engine:
         # Castling
         castlingRights = gameState[2]
         if (castlingRights != "-"):
-            if "K" in castlingRights:
+            if ("K" in castlingRights):
                 self.whiteCastling["kingside"] = True
-            if "Q" in castlingRights:
+            if ("Q" in castlingRights):
                 self.whiteCastling["queenside"] = True
-            if "k" in castlingRights:
+            if ("k" in castlingRights):
                 self.blackCastling["kingside"] = True
-            if "q" in castlingRights:
+            if ("q" in castlingRights):
                 self.blackCastling["queenside"] = True
         else:
             pass
@@ -451,7 +512,7 @@ class Engine:
 
 # --- Move Class --- #
 class Move:
-    def __init__(self, startRank, startFile, endRank, endFile, virtualBoard):
+    def __init__(self, startRank, startFile, endRank, endFile, virtualBoard, isCastle=False):
         try:
             # Start and End Position of the Move
             self.startRank = startRank
@@ -463,7 +524,7 @@ class Move:
             self.pieceMoved = virtualBoard[self.startRank][self.startFile]
             self.pieceCaptured = virtualBoard[self.endRank][self.endFile]
             self.moveId = self.startRank * 1 + self.startFile * 0.1 + self.endRank * 0.01 + self.endFile * 0.001
-        except IndexError:
+        except (IndexError):
             print("Cannot move piece off of board.")
 
         # Special Moves
@@ -473,6 +534,7 @@ class Move:
             self.pawnPromotion = True
 
         self.enPassant = False
+        self.isCastle = isCastle
 
         self.twoSquareAdvance = False
         if (self.pieceMoved[-1] == "e" and self.pieceMoved[0] == "p" and self.startRank - self.endRank == 2) or \
@@ -506,7 +568,7 @@ class Move:
         :param other: other move object to compare
         :return: True if moveId is the same, False otherwise
         """
-        if isinstance(other, Move):
+        if (isinstance(other, Move)):
             return self.moveId == other.moveId
         return False
 
@@ -515,8 +577,13 @@ class Move:
         Overloading string method
         :return: str (string representation of a chess move)
         """
-        if self.pieceCaptured != "0":
-            if self.pieceMoved[0] == "p":
+        if (self.isCastle):
+            if (self.endFile == 6):
+                return "O-O"
+            else:
+                return "O-O-O"
+        if (self.pieceCaptured != "0"):
+            if (self.pieceMoved[0] == "p"):
                 return f"{self.intToLetter[self.startFile]}x{self.intToLetter[self.endFile]}{8 - self.endRank}"
             else:
                 return f"{self.pieceCast[self.pieceMoved[0]]}x{self.intToLetter[self.endFile]}{8 - self.endRank}"
