@@ -401,31 +401,31 @@ class Engine:
         if (move.pieceMoved == "King_white"):
             self.whiteCastling["kingside"] = False
             self.whiteCastling["queenside"] = False
-            print("1")
+            print("king moved")
         elif (move.pieceMoved == "King_black"):
             self.blackCastling["kingside"] = False
             self.blackCastling["queenside"] = False
-            print("2")
+            print("king moved")
 
-        elif move.pieceMoved == "rook_white":
+        elif (move.pieceMoved == "rook_white"):
             if (move.startRank == 7):
                 if (move.startFile == 0):
                     self.whiteCastling["queenside"] = False
-                    print("3")
+                    print("rook moved")
 
                 elif (move.startFile == 7):
                     self.whiteCastling["kingside"] = False
-                    print("4")
+                    print("rook moved")
 
         elif (move.pieceMoved == "rook_black"):
             if (move.startRank == 0):
                 if (move.startFile == 0):
                     self.blackCastling["queenside"] = False
-                    print("5")
+                    print("rook moved")
 
                 elif (move.startFile == 7):
                     self.blackCastling["kingside"] = False
-                    print("6")
+                    print("rook moved")
 
 
 
